@@ -1,0 +1,276 @@
+{
+	"info": {
+		"_postman_id": "6fe756e7-5362-4e68-b9c5-ce3013a8c88b",
+		"name": "NATS POC",
+		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+	},
+	"item": [
+		{
+			"name": "Create subscriber on ERA",
+			"request": {
+				"auth": {
+					"type": "basic",
+					"basic": [
+						{
+							"key": "password",
+							"value": "Nutanix.1",
+							"type": "string"
+						},
+						{
+							"key": "username",
+							"value": "admin",
+							"type": "string"
+						}
+					]
+				},
+				"method": "POST",
+				"header": [],
+				"body": {
+					"mode": "raw",
+					"raw": "{\n    \"topic\": \"clientA_request\"\n}",
+					"options": {
+						"raw": {
+							"language": "json"
+						}
+					}
+				},
+				"url": {
+					"raw": "http://localhost:7000/create-subscriber",
+					"protocol": "http",
+					"host": [
+						"localhost"
+					],
+					"port": "7000",
+					"path": [
+						"create-subscriber"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "Add Reply subject on ERA",
+			"request": {
+				"method": "POST",
+				"header": [],
+				"body": {
+					"mode": "raw",
+					"raw": "{\n    \"subject\": \"clientA_command\",\n    \"replySubject\": \"clientA_command_response\"\n}",
+					"options": {
+						"raw": {
+							"language": "json"
+						}
+					}
+				},
+				"url": {
+					"raw": "http://localhost:7000/add-request-reply-subject",
+					"protocol": "http",
+					"host": [
+						"localhost"
+					],
+					"port": "7000",
+					"path": [
+						"add-request-reply-subject"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "API Request from DBServer",
+			"request": {
+				"method": "POST",
+				"header": [],
+				"body": {
+					"mode": "raw",
+					"raw": "{\n    \"subject\": \"clientA_request\",\n    \"message\": \"ajhvsd\"\n}",
+					"options": {
+						"raw": {
+							"language": "json"
+						}
+					}
+				},
+				"url": {
+					"raw": "http://localhost:8000/publish-message",
+					"protocol": "http",
+					"host": [
+						"localhost"
+					],
+					"port": "8000",
+					"path": [
+						"publish-message"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "Reply Request from ERA",
+			"request": {
+				"method": "POST",
+				"header": [],
+				"body": {
+					"mode": "raw",
+					"raw": "{\n    \"subject\": \"clientA_command\",\n    \"message\": \"tes\"\n}",
+					"options": {
+						"raw": {
+							"language": "json"
+						}
+					}
+				},
+				"url": {
+					"raw": "http://localhost:7000/publish-message",
+					"protocol": "http",
+					"host": [
+						"localhost"
+					],
+					"port": "7000",
+					"path": [
+						"publish-message"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "Publish Message from ERA",
+			"request": {
+				"method": "POST",
+				"header": [],
+				"body": {
+					"mode": "raw",
+					"raw": "{\n    \"subject\": \"clientA_work\",\n    \"message\": \"tes\"\n}",
+					"options": {
+						"raw": {
+							"language": "json"
+						}
+					}
+				},
+				"url": {
+					"raw": "http://localhost:7000/publish-message",
+					"protocol": "http",
+					"host": [
+						"localhost"
+					],
+					"port": "7000",
+					"path": [
+						"publish-message"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "Add Stream on ERA",
+			"request": {
+				"method": "POST",
+				"header": [],
+				"body": {
+					"mode": "raw",
+					"raw": "{\n    \"stream\": \"clientA\",\n    \"subject\": \"workSubA\"\n}",
+					"options": {
+						"raw": {
+							"language": "json"
+						}
+					}
+				},
+				"url": {
+					"raw": "http://localhost:7000/add-stream",
+					"protocol": "http",
+					"host": [
+						"localhost"
+					],
+					"port": "7000",
+					"path": [
+						"add-stream"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "Add Durable Customer on ERA",
+			"request": {
+				"method": "POST",
+				"header": [],
+				"body": {
+					"mode": "raw",
+					"raw": "{\n    \"stream\" : \"clientA\",\n    \"durableName\": \"clientA\"\n}",
+					"options": {
+						"raw": {
+							"language": "json"
+						}
+					}
+				},
+				"url": {
+					"raw": "http://localhost:7000/add-durable-customer",
+					"protocol": "http",
+					"host": [
+						"localhost"
+					],
+					"port": "7000",
+					"path": [
+						"add-durable-customer"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "Publish Stream on ERA",
+			"request": {
+				"method": "POST",
+				"header": [],
+				"body": {
+					"mode": "raw",
+					"raw": "{\n    \"message\": \"ads\",\n    \"subject\": \"workSubC\"\n}",
+					"options": {
+						"raw": {
+							"language": "json"
+						}
+					}
+				},
+				"url": {
+					"raw": "http://localhost:7000/publish-stream",
+					"protocol": "http",
+					"host": [
+						"localhost"
+					],
+					"port": "7000",
+					"path": [
+						"publish-stream"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "Create Pull Consumer on DBServer",
+			"request": {
+				"method": "POST",
+				"header": [],
+				"body": {
+					"mode": "raw",
+					"raw": "{\n    \"subject\": \"workSubA\",\n    \"name\": \"clientA\"\n}",
+					"options": {
+						"raw": {
+							"language": "json"
+						}
+					}
+				},
+				"url": {
+					"raw": "http://localhost:8000/create-pull-consumer",
+					"protocol": "http",
+					"host": [
+						"localhost"
+					],
+					"port": "8000",
+					"path": [
+						"create-pull-consumer"
+					]
+				}
+			},
+			"response": []
+		}
+	]
+}
