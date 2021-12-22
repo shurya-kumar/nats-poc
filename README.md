@@ -32,5 +32,7 @@ Import the postman_collection.json into postman and run the API's in the followi
 The above requests will initiate the messaging design proposed.
 
 Command subject Testing: Run "Reply Request from ERA"
+#
 Request subject Testing: Run "API Request from DBServer"
+#
 Operation subject Testing: Run "Publish Stream on ERA" // Monitor the terminal where dbserver client was started. It will fetch message 1 message every 2 seconds
