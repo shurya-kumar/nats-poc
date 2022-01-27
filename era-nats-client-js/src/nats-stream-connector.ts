@@ -1,6 +1,6 @@
 import {
   AckPolicy, ConsumerInfo,
-  JetStreamClient,
+  JetStreamClient, Lister,
   NatsConnection,
   RetentionPolicy,
   StorageType,
@@ -35,15 +35,31 @@ async function addStream(streamName: string, subject: string): Promise<string>{
       retention: RetentionPolicy.Workqueue,
       max_consumers: 5,
       storage: StorageType.File,
-      num_replicas: 2
+      num_replicas: 1
     };
-    console.log(streamConfig)
     const streamInfo: StreamInfo = await jetStreamManager.streams.add(streamConfig);
     return `Created stream with name ${streamName} and subject ${subject} on ${streamInfo.created}`
   } catch (e){
     console.log(e);
     return `Failed to create a stream ${streamName}`;
   }
+}
+
+async function findStreamBySubject(subject: string, stream: string): Promise<string>{
+  let test = await jetStreamManager.streams.find(subject);
+  console.log(test)
+  let list: Lister<StreamInfo> = jetStreamManager.streams.list();
+  let streams:StreamInfo[] = await list.next();
+  streams.forEach(s => {
+    console.log(s.config.name)
+    console.log(s.config.subjects)
+  })
+  let consumerList: Lister<ConsumerInfo> = jetStreamManager.consumers.list(stream);
+  let consumers: ConsumerInfo[] = await consumerList.next();
+  consumers.forEach(c => {
+    console.log(c.stream_name)
+  })
+  return "Done"
 }
 
 async function removeStream(streamName: string): Promise<string>{
@@ -101,4 +117,4 @@ async function publishMessageToStream(message, subject){
   }
 }
 
-export {initStreamConnection, addStream, addDurableConsumer, publishMessageToStream, removeDurableConsumer}
+export {initStreamConnection, addStream, addDurableConsumer, publishMessageToStream, removeDurableConsumer, findStreamBySubject}

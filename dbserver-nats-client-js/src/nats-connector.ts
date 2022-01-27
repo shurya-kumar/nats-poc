@@ -32,10 +32,15 @@ function createSubscriber(subject: string){
   subscriptionMap.set(subject, subscription);
   (async () => {
     for await (const m of subscription) {
+      let response = {
+        data: m.data
+      }
       console.log(`[${ subscription.getSubject() } - ${ subscription.getProcessed() }]: ${ sc.decode(m.data) }`);
       if (!!m.reply) {
         // TODO: Construct API and hit the respective API
-        m.respond(sc.encode(m.data + ' executed. Output generated'))
+        let res = response.data + ' executed. Output generated: ' + new Date().toISOString();
+        console.log(res)
+        m.respond(sc.encode(res));
       }
     }
   })();
@@ -46,7 +51,7 @@ async function publishMessage(subject: string, message: any){
     const requestOptions = {
       timeout: 5000,
       noMux: true,
-      reply: replyRequestMap.get(subject)
+      reply: `${replyRequestMap.get(subject)}.${Math.ceil(Math.random() * 1000)}`
     }
     let response;
     try{

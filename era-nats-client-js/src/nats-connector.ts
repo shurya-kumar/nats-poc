@@ -16,6 +16,17 @@ async function initConnection(natsConnectOptions: ConnectionOptions): Promise<Na
     console.log("Initializing connection to NATS server")
     natsConnection = await connect(natsConnectOptions);
     console.log(`connected to ${natsConnection.getServer()}`);
+    (() => {
+
+      let counter = 0;
+      (async () => {
+        for await (const s of natsConnection.status()) {
+          counter++;
+          console.info(`${counter} ${s.type}: ${JSON.stringify(s.data)}`);
+        }
+      })().then();
+    })();
+
     return natsConnection;
   } catch (e) {
     console.log("Failed to connect to NATS Server");
@@ -55,7 +66,10 @@ function createSubscriber(subject: string, requestSubject?: string) {
         axios.get('https://random-data-api.com/api/device/random_device')
           .then(response => {
             response.data.id = m.data + '-' + subscription.getSubject() + '-' + subscription.getProcessed();
-            m.respond(sc.encode(JSON.stringify(response.data)))
+            var test: boolean = m.respond(sc.encode(JSON.stringify(response.data)))
+            if(!test){
+              m.respond()
+            }
           })
           .catch(error => {
             console.log(error);
@@ -69,16 +83,27 @@ async function publishMessage(subject: string, message: any) {
   if (replyRequestMap.has(subject)) {
     const requestOptions = {
       timeout: 5000,
-      reply: replyRequestMap.get(subject),
+      reply: Math.ceil(Math.random()*1000).toString(),
       noMux: true
     }
-    const response = await natsConnection.request(subject, sc.encode(message), requestOptions);
-    return {
-      message: `Published message in topic ${subject} and received response`,
-      response: sc.decode(response.data)
-    }
+    return natsConnection.request(subject, sc.encode(message), requestOptions).then(response => {
+        console.log(message + ' ::::: ' + sc.decode(response.data));
+        return {
+          message: `Published message ${message} in topic ${subject} and received response`,
+          response: sc.decode(response.data)
+        }
+      }).catch(e => {
+        return {
+          message: e
+        }
+      });
   } else {
-    natsConnection.publish(subject, sc.encode(message))
+    try{
+      console.log(natsConnection.isClosed())
+      natsConnection.publish(subject, sc.encode(message))
+    } catch (e){
+      console.log("12" + e)
+    }
     return {
       message: `Published message in topic ${subject}`,
       response: null

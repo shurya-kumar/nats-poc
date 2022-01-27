@@ -56,11 +56,12 @@ async function createPullConsumer(subject: string, durableName: string): Promise
 
 // To start receiving messages you pull the subscription
     setInterval(() => {
-      psub.pull({ batch: 1, expires: 2000 });
+      psub.pull({ batch: 5, expires: 2000 });
     }, 2000);
 
     return `Created pull customer with name ${durableName} for subject ${subject}`
   } catch (e){
+    console.log(e)
     return `Failed to create pull customer with name ${durableName} for subject ${subject}`
   }
 }

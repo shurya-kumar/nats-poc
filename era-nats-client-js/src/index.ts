@@ -1,6 +1,8 @@
 import {createSubscriber, initConnection, closeClientConnection, publishMessage, addToRequestReplyMap} from "./nats-connector";
-import {initStreamConnection, addStream, addDurableConsumer, publishMessageToStream, removeDurableConsumer} from './nats-stream-connector';
-import {ConnectionOptions} from "nats";
+import {initStreamConnection, addStream, addDurableConsumer, publishMessageToStream, removeDurableConsumer, findStreamBySubject} from './nats-stream-connector';
+import {ConnectionOptions, credsAuthenticator, jwtAuthenticator, StringCodec} from "nats";
+import * as cred from "./eratoken.json";
+import {response} from "express";
 
 const express = require('express');
 const router = express.Router();
@@ -11,10 +13,14 @@ const app = express();
 app.use(bodyParser.urlencoded({ extended: false }));
 app.use(bodyParser.json());
 
+const jwtAuth = jwtAuthenticator(cred.jwt);
 const natsConnectOptions: ConnectionOptions = {
-  servers: ["10.15.152.170:4222","10.15.152.172:4222","10.15.152.177:4222"],
-  token: "NatsEra!",
-  debug: true
+  servers: ["10.15.152.152:4222"],
+  authenticator: jwtAuth,
+  debug: true,
+  noEcho: true,
+  ignoreClusterUpdates: true,
+  maxReconnectAttempts: 5
 };
 
 // ------------------------------START OF CONTROLLER----------------------------------------------------
@@ -35,6 +41,7 @@ app.post('/create-subscriber', (req, res) => {
 });
 
 app.post('/publish-message', (req, res) => {
+  console.log("Request received at: " + new Date().toISOString())
   publishMessage(req.body.subject, req.body.message).then(response => {
     res.send(response);
   })
@@ -58,6 +65,13 @@ app.delete('/remove-durable-customer', (req, res) => {
     res.send(response);
   })
 });
+
+app.post('/test', (req, res) => {
+  findStreamBySubject(req.body.topic, req.body.stream).then(response => {
+    console.log(response);
+    res.send(response);
+  })
+})
 
 app.post('/publish-stream', (req, res) => {
   publishMessageToStream(req.body.message, req.body.subject).then(response => {

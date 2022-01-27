@@ -4,16 +4,21 @@ import {
   createStreamPushSubscriber,
   createPullConsumer
 } from "./nats-stream-connector";
-import {ConnectionOptions} from "nats";
+import {ConnectionOptions, jwtAuthenticator} from "nats";
+import * as cred from "./token.json";
 
 const express = require('express');
 const router = express.Router();
 const bodyParser = require("body-parser");
 const port = 8000;
+const jwtAuth = jwtAuthenticator(cred.jwt)
 const natsConnectOptions: ConnectionOptions = {
-  servers: ["10.15.152.170:4222","10.15.152.172:4222","10.15.152.177:4222"],
-  token: "NatsEra!",
-  debug: true
+  servers: ["10.15.152.152:4222"],
+  authenticator: jwtAuth,
+  debug: false,
+  noEcho: true,
+  ignoreClusterUpdates: true,
+  maxReconnectAttempts: 5
 };
 
 const app = express();
@@ -35,6 +40,11 @@ app.post('/create-pull-consumer', (req, res) => {
     res.send(response);
   })
 })
+
+app.post('/create-subscriber', (req, res) => {
+  createSubscriber(req.body.topic)
+  res.send(`Created a subscriber for topic ${req.body.topic}`)
+});
 
 const server = app.listen(port, 'localhost', () => {
   const argv = require('minimist')(process.argv.slice(2));
