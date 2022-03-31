@@ -29,6 +29,7 @@ function addToRequestReplyMap(replySubject: string, requestSubject: string){
 
 function createSubscriber(subject: string){
   const subscription = natsConnection.subscribe(subject);
+  console.log(subject)
   subscriptionMap.set(subject, subscription);
   (async () => {
     for await (const m of subscription) {
@@ -36,6 +37,7 @@ function createSubscriber(subject: string){
         data: m.data
       }
       console.log(`[${ subscription.getSubject() } - ${ subscription.getProcessed() }]: ${ sc.decode(m.data) }`);
+      console.log(m.reply)
       if (!!m.reply) {
         // TODO: Construct API and hit the respective API
         let res = response.data + ' executed. Output generated: ' + new Date().toISOString();
@@ -47,11 +49,12 @@ function createSubscriber(subject: string){
 }
 
 async function publishMessage(subject: string, message: any){
+  console.log(replyRequestMap.has(subject))
   if(replyRequestMap.has(subject)){
+    console.log("Requesting in" + subject)
     const requestOptions = {
       timeout: 5000,
-      noMux: true,
-      reply: `${replyRequestMap.get(subject)}.${Math.ceil(Math.random() * 1000)}`
+      noMux: true
     }
     let response;
     try{
@@ -61,6 +64,7 @@ async function publishMessage(subject: string, message: any){
         response: JSON.parse(sc.decode(response.data))
       }
     } catch (e){
+      console.log(e)
       return {
         message: `Failed to fetch API response`,
         response: null

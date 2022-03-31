@@ -1,0 +1,358 @@
+{
+  "message": {
+    "ownerId": "eac70dbf-22fb-462b-9498-949796ca1f73",
+    "userDTO": null,
+    "connection": null,
+    "timeZone": "UTC",
+    "apiCaller": false,
+    "actionHeader": [
+      {
+        "ref_id": "97a95143-37f7-44be-9a8a-d36c7cc5efa1",
+        "name": "isReplicatedSnapshot",
+        "value": "false",
+        "secure": false,
+        "description": null
+      },
+      {
+        "ref_id": "97a95143-37f7-44be-9a8a-d36c7cc5efa1",
+        "name": "snapshotId",
+        "value": "a536a8d2-4121-4734-a617-21c9d862901e",
+        "secure": false,
+        "description": null
+      },
+      {
+        "ref_id": "97a95143-37f7-44be-9a8a-d36c7cc5efa1",
+        "name": "osType",
+        "value": "linux",
+        "secure": false,
+        "description": null
+      },
+      {
+        "ref_id": "97a95143-37f7-44be-9a8a-d36c7cc5efa1",
+        "name": "dbserverId",
+        "value": "a7900332-744d-40fd-b78a-1956e12d82be",
+        "secure": false,
+        "description": null
+      },
+      {
+        "ref_id": "97a95143-37f7-44be-9a8a-d36c7cc5efa1",
+        "name": "skipRollback",
+        "value": "false",
+        "secure": false,
+        "description": null
+      },
+      {
+        "ref_id": "97a95143-37f7-44be-9a8a-d36c7cc5efa1",
+        "name": "working_directory",
+        "value": "/tmp",
+        "secure": false,
+        "description": null
+      },
+      {
+        "ref_id": "97a95143-37f7-44be-9a8a-d36c7cc5efa1",
+        "name": "skipDriverInputValidation",
+        "value": "false",
+        "secure": false,
+        "description": null
+      },
+      {
+        "ref_id": "97a95143-37f7-44be-9a8a-d36c7cc5efa1",
+        "name": "is_user_visible",
+        "value": "true",
+        "secure": false,
+        "description": null
+      },
+      {
+        "ref_id": "97a95143-37f7-44be-9a8a-d36c7cc5efa1",
+        "name": "isRollbackOperation",
+        "value": "false",
+        "secure": false,
+        "description": null
+      },
+      {
+        "ref_id": null,
+        "name": "ansible_driver_async_run_time_in_secs",
+        "value": "86400",
+        "secure": false,
+        "description": null
+      },
+      {
+        "ref_id": null,
+        "name": "ansible_driver_async_poll_time_in_secs",
+        "value": "30",
+        "secure": false,
+        "description": null
+      },
+      {
+        "ref_id": null,
+        "name": "operation_token",
+        "value": "eyJhbGciOiJSUzI1NiJ9.eyJpc3MiOiJFcmFTZXJ2ZXIiLCJhdWQiOiI5N2E5NTE0MzM3Zjc0NGJlOWE4YWQzNmM3Y2M1ZWZhMSIsInN1YiI6ImVyYS1pbnRlcm5hbC11c2VyLWlkIiwicm9sZXMiOiJbXSIsImdyb3VwcyI6IltdIiwidHlwZSI6ImFjY2Vzcy1rZXlzIiwiaWF0IjoxNjQ3NDE3NjE2LCJleHAiOjEzMDQ5NjQzNjQzNiwianRpIjoiOTdhOTUxNDMzN2Y3NDRiZTlhOGFkMzZjN2NjNWVmYTEiLCJvcGVyYXRpb25JZCI6ImQ4ZGEyY2E4LWU1MzEtNDQyZC1hYjA4LTA4NTliOTg1MDk2OCJ9.bezobdF-9k0ap5d3oNLnPVeLEdMXkC7KBSLMeNNLOJWQWu7Xs_-sLhYD0OUTnKbVLxpCs3FLIJCpqO6iHV2lpjVyKO9-2jeUf852uJwf8q6xH8_dZ8I_rDofJI4fFkc0EoeXVyAVxYK65FqJJxB5qFZbY0kxRtHAFQQNguG7kWn7FuPowqwIdJfbaa-jIa140x6KhQ1zoVjx_auTtMY8m-mRMu7hwrwLY_Y-63CaEWLBLjN0CUDeyDkelShp9zTwqYmk0n5Rai1L3RwfkYBauDprIBVoO0b21D89rdnkodAcJj0EA0WxU4A_IFG15-caz_SUxDzDING9d_SrDh39pg",
+        "secure": false,
+        "description": null
+      },
+      {
+        "name": "operation_abort_message",
+        "value": "The operation is being aborted as per the user request"
+      }
+    ],
+    "actionArguments": [],
+    "payload": {
+      "nxClusterId": "57b66113-a6db-4d56-9ade-dd468ebd712d",
+      "timeMachineInfo": [
+        {
+          "id": "9ccf80b3-7e9c-496a-a660-58bfd0a20154",
+          "name": "SCALABILITY_ORCL_NTUH_NTUHBACK_TM",
+          "databaseId": "9ff8887b-97dc-4b94-8275-85206c784706",
+          "logDriveId": "ac506885-4c7b-406c-9be5-63dfa1fff9a6"
+        }
+      ]
+    },
+    "parentOperation": null,
+    "parentWorkId": null,
+    "parentStepIndex": 0,
+    "prePostCommand": null,
+    "preRollbackCommand": null,
+    "id": "97a95143-37f7-44be-9a8a-d36c7cc5efa1",
+    "name": "SCALABILITY_ORCL_NTUH_NTUHBACK_TM",
+    "type": "copy_era_logs",
+    "applicationType": "generic",
+    "hostId": null,
+    "clientId": "69954ef1-ae87-4d63-900a-b82d2facbc90",
+    "applicationId": "9ccf80b3-7e9c-496a-a660-58bfd0a20154",
+    "systemCreated": true,
+    "entityId": "9ccf80b3-7e9c-496a-a660-58bfd0a20154",
+    "entityName": "SCALABILITY_ORCL_NTUH_NTUHBACK_TM",
+    "entityType": null,
+    "submissionDate": "2022-03-16 08:00:04.463263",
+    "expiryDate": "2022-03-17 08:00:04",
+    "status": "8",
+    "operationId": "d8da2ca8-e531-442d-ab08-0859b9850968",
+    "parentId": null,
+    "parentOpStep": 0,
+    "clientNxClusterId": "57b66113-a6db-4d56-9ade-dd468ebd712d",
+    "submittedForOwnerId": null,
+    "priority": 20,
+    "message": null,
+    "statusName": null,
+    "verboseLevel": 5,
+    "properties": null,
+    "operationDefinition": {
+      "entityName": "SCALABILITY_ORCL_NTUH_NTUHBACK_TM",
+      "work": null,
+      "stepGenEnabled": false,
+      "setStartTime": false,
+      "timeZone": "UTC",
+      "id": "d8da2ca8-e531-442d-ab08-0859b9850968",
+      "name": "Copy Database Logs",
+      "uniqueName": null,
+      "type": "copy_era_logs",
+      "startTime": null,
+      "timeout": 70,
+      "timeoutInfo": {
+        "timeoutTimestamp": null,
+        "timeRemaining": null,
+        "timeout": 70,
+        "timezone": "UTC"
+      },
+      "endTime": null,
+      "instanceId": null,
+      "ownerId": "eac70dbf-22fb-462b-9498-949796ca1f73",
+      "status": "8",
+      "percentageComplete": "0",
+      "steps": [
+        {
+          "stepGenEnabled": false,
+          "setStartTimeValue": false,
+          "id": "95e2e48d-7bfb-4931-a4eb-a93feff70c34",
+          "name": "Pre-processing",
+          "uniqueName": null,
+          "definitionId": "d8da2ca8-e531-442d-ab08-0859b9850968",
+          "startTime": null,
+          "endTime": null,
+          "instanceId": null,
+          "parentId": null,
+          "level": "0",
+          "status": "10",
+          "fileId": null,
+          "percentageComplete": "0",
+          "message": null,
+          "sequenceNumber": 1,
+          "childSteps": null,
+          "weightage": 0
+        },
+        {
+          "stepGenEnabled": false,
+          "setStartTimeValue": false,
+          "id": "5d38ba09-8e54-4b66-b5bc-b177fdcb7425",
+          "name": "Clone & Attach Staging Snapshot",
+          "uniqueName": null,
+          "definitionId": "d8da2ca8-e531-442d-ab08-0859b9850968",
+          "startTime": null,
+          "endTime": null,
+          "instanceId": null,
+          "parentId": null,
+          "level": "0",
+          "status": "10",
+          "fileId": null,
+          "percentageComplete": "0",
+          "message": null,
+          "sequenceNumber": 2,
+          "childSteps": null,
+          "weightage": 0
+        },
+        {
+          "stepGenEnabled": false,
+          "setStartTimeValue": false,
+          "id": "e710357d-fa21-45d8-bc63-31e0962a6b38",
+          "name": "Copy Log Files",
+          "uniqueName": null,
+          "definitionId": "d8da2ca8-e531-442d-ab08-0859b9850968",
+          "startTime": null,
+          "endTime": null,
+          "instanceId": null,
+          "parentId": null,
+          "level": "0",
+          "status": "10",
+          "fileId": null,
+          "percentageComplete": "0",
+          "message": null,
+          "sequenceNumber": 3,
+          "childSteps": null,
+          "weightage": 0
+        },
+        {
+          "stepGenEnabled": false,
+          "setStartTimeValue": false,
+          "id": "22620741-4526-4fa3-8372-917f5f0d4566",
+          "name": "Detach Staging Snapshot",
+          "uniqueName": null,
+          "definitionId": "d8da2ca8-e531-442d-ab08-0859b9850968",
+          "startTime": null,
+          "endTime": null,
+          "instanceId": null,
+          "parentId": null,
+          "level": "0",
+          "status": "10",
+          "fileId": null,
+          "percentageComplete": "0",
+          "message": null,
+          "sequenceNumber": 4,
+          "childSteps": null,
+          "weightage": 0
+        },
+        {
+          "stepGenEnabled": false,
+          "setStartTimeValue": false,
+          "id": "7b66a016-107a-47c9-9b96-acb034fdf87f",
+          "name": "Rollback",
+          "uniqueName": null,
+          "definitionId": "d8da2ca8-e531-442d-ab08-0859b9850968",
+          "startTime": null,
+          "endTime": null,
+          "instanceId": null,
+          "parentId": null,
+          "level": "0",
+          "status": "10",
+          "fileId": null,
+          "percentageComplete": "0",
+          "message": null,
+          "sequenceNumber": 5,
+          "childSteps": null,
+          "weightage": 0
+        }
+      ],
+      "properties": [],
+      "parentId": null,
+      "parentStep": 0,
+      "message": null,
+      "metadata": {
+        "linkedOperations": [
+          {
+            "label": null,
+            "displayMessage": "Associated Log Catch Up",
+            "operationId": "3a5ab7ca-e835-4eb1-b9d1-ae8fae2c897d",
+            "primary": true
+          }
+        ],
+        "associatedEntities": [
+          {
+            "id": "9ccf80b3-7e9c-496a-a660-58bfd0a20154",
+            "name": "SCALABILITY_ORCL_NTUH_NTUHBACK_TM",
+            "type": "ERA_TIME_MACHINE",
+            "properties": null
+          },
+          {
+            "id": "a536a8d2-4121-4734-a617-21c9d862901e",
+            "name": "a536a8d2-4121-4734-a617-21c9d862901e",
+            "type": "ERA_STAGING_SNAPSHOT",
+            "properties": null
+          }
+        ],
+        "oldStatus": null,
+        "userRequestedAction": "0",
+        "userRequestedActionTimestamp": null,
+        "controlMessage": null,
+        "executionContext": {
+          "affectedDBServers": [
+            "a7900332-744d-40fd-b78a-1956e12d82be"
+          ],
+          "extendedAffectedDBServers": [
+            "dee97821-4245-4cee-bc30-ec9f2da0ea8d",
+            "a7900332-744d-40fd-b78a-1956e12d82be"
+          ],
+          "applicationType": "generic"
+        },
+        "scheduleTime": null,
+        "scheduledBy": "75237b42-34ec-461a-9382-6d05603ae954",
+        "scheduledOn": "2022-03-16 08:00:05",
+        "retryParentId": null,
+        "retryImmediateParentId": null,
+        "retriedOperations": null,
+        "switchedDbservers": null,
+        "ancestorOpIds": null,
+        "rollbackOperation": false,
+        "rollbackForOperationId": null,
+        "workCompletionCallbackExecuted": false,
+        "linkedOperationsDescription": "Associated operation(s)"
+      },
+      "entityId": "9ccf80b3-7e9c-496a-a660-58bfd0a20154",
+      "entityType": null,
+      "systemTriggered": true,
+      "userVisible": true,
+      "dbserverId": "dee97821-4245-4cee-bc30-ec9f2da0ea8d",
+      "dateSubmitted": "2022-03-16 08:00:05",
+      "deferredBy": null,
+      "deferredByOpIds": null,
+      "scheduleTime": null,
+      "isInternal": false,
+      "nxClusterId": "57b66113-a6db-4d56-9ade-dd468ebd712d",
+      "dbserverStatus": "UP",
+      "childOperations": [],
+      "userRequestedActionTime": null,
+      "userRequestedAction": "0",
+      "ancestorOpIds": null
+    },
+    "stepGenEnabled": true,
+    "deferredBy": [],
+    "isEraCreated": false,
+    "isInternal": false,
+    "internalEntity": false,
+    "rollbackOperation": false,
+    "scheduleTime": null,
+    "scheduleInfo": null,
+    "lcmConfig": null,
+    "originalOperationId": null,
+    "dependencyReport": null,
+    "tags": null,
+    "skipDriverArgumentValidations": false,
+    "skipClientIdValidation": false,
+    "execution_context": {
+      "execution_id": "d8da2ca8-e531-442d-ab08-0859b9850968",
+      "operation_user": "admin",
+      "operation_key": "684d962f61b443ddb7e5e4814d3cad0b:NN2AGGEGbpeY2Ai8KRFttksIrFO1h3WgnwAXXnN8"
+    },
+    "LOG_DIRECTORY_PATH": "/home/era/era_base/logs/drivers/log_copy/",
+    "LOG_FILE_NAME": "d8da2ca8-e531-442d-ab08-0859b9850968-2022-03-16-01:00:16.log"
+  },
+  "subject": "orchestrator.operations"
+}

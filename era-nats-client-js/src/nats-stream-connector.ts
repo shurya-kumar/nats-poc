@@ -10,6 +10,7 @@ import {JetStreamManager, StreamInfo} from "nats/lib/nats-base-client/types";
 import {StringCodec} from "nats";
 
 const sc = StringCodec();
+const jc = StringCodec();
 let natsStreamConnection: NatsConnection;
 let jetStreamManager: JetStreamManager;
 let jetStreamClient: JetStreamClient;
@@ -46,8 +47,8 @@ async function addStream(streamName: string, subject: string): Promise<string>{
 }
 
 async function findStreamBySubject(subject: string, stream: string): Promise<string>{
-  let test = await jetStreamManager.streams.find(subject);
-  console.log(test)
+  // let test = await jetStreamManager.streams.find(subject);
+  // console.log(test)
   let list: Lister<StreamInfo> = jetStreamManager.streams.list();
   let streams:StreamInfo[] = await list.next();
   streams.forEach(s => {
@@ -57,6 +58,7 @@ async function findStreamBySubject(subject: string, stream: string): Promise<str
   let consumerList: Lister<ConsumerInfo> = jetStreamManager.consumers.list(stream);
   let consumers: ConsumerInfo[] = await consumerList.next();
   consumers.forEach(c => {
+    console.log(c)
     console.log(c.stream_name)
   })
   return "Done"
@@ -109,7 +111,7 @@ async function removeDurableConsumer(stream: string, durableName: string): Promi
 
 async function publishMessageToStream(message, subject){
   try{
-    await jetStreamClient.publish(subject, sc.encode(message));
+    await jetStreamClient.publish(subject, sc.encode(JSON.stringify(message)));
     return `Published message to stream on ${subject}`
   } catch (e){
     console.log(e);
@@ -117,4 +119,4 @@ async function publishMessageToStream(message, subject){
   }
 }
 
-export {initStreamConnection, addStream, addDurableConsumer, publishMessageToStream, removeDurableConsumer, findStreamBySubject}
+export {initStreamConnection, addStream, addDurableConsumer, publishMessageToStream, removeStream, removeDurableConsumer, findStreamBySubject}

@@ -1,0 +1,9 @@
+{
+  "subject": "08160976-c66a-4aea-aqqq-e853db231543.56c0224d-57d5-4d0a-aba8-5cf1ab12a765.requests",
+  "message": {
+    "method": "PATCH",
+    "url": "era/v1.0/works/work_id",
+    "data": {"id": "97a95143-37f7-44be-9a8a-d36c7cc5efa1", "status": "1", "operationId": "d8da2ca8-e531-442d-ab08-0859b9850968"},
+    "headers": {"Content-Type": "application/json", "client_tz": "UTC", "current_time": "2022-03-17 01:37:17", "client_ip_address": "172.31.19.169", "cli_version": "2.4"}
+  }
+}
