@@ -11,16 +11,18 @@ const express = require('express');
 const router = express.Router();
 const bodyParser = require("body-parser");
 const port = 8000;
-const jwtAuth = jwtAuthenticator(cred.jwt)
+const jwtAuth = jwtAuthenticator(cred.jenkins1_internal)
 const natsConnectOptions: ConnectionOptions = {
-  servers: ["10.15.152.152:4222"],
+  servers: ["tls://platform-nats-internal-cluster.nxengg.cloud:443"],
   authenticator: jwtAuth,
-  debug: false,
+  debug: true,
   noEcho: true,
   ignoreClusterUpdates: true,
   maxReconnectAttempts: 5,
-  name: "Tes",
-  inboxPrefix: "_56c0224d-57d5-4d0a-aba8-5cf1ab12a765"
+  name: "Shurya",
+  tls: {
+    caFile: "/Users/shurya/poc/certs/cpaas-ca-int.pem"
+  }
 };
 
 const app = express();
@@ -56,40 +58,54 @@ app.post('/create-subscriber', (req, res) => {
 
 const server = app.listen(port, 'localhost', () => {
   const argv = require('minimist')(process.argv.slice(2));
-  try{
-    if((argv.hasOwnProperty('command_subject') && typeof argv.command_subject == 'string') &&
-      (argv.hasOwnProperty('request_subject') && typeof argv.request_subject == 'string') &&
-      (argv.hasOwnProperty('reply_subject') && typeof argv.reply_subject == 'string')){
-      console.log(`Nats Client App listening on port ${port}`)
-      initConnection(natsConnectOptions).then(natsConnection => {
-        if (!natsConnection) {
-          throw `Failed to establish connection to ${JSON.stringify(natsConnectOptions.servers)}`
-        }
-        initStreamConnection(natsConnection).then(isStreamConEstablished => {
-          if (!isStreamConEstablished) {
-            throw `Failed to establish stream connection`
-          }
-        });
-        createSubscriber(argv.command_subject);
-        addToRequestReplyMap(argv.reply_subject, argv.request_subject);
 
-        // let count=0, startTime = new Date();
-        // console.log("Start Time: " + startTime)
-        // publishTest(startTime, natsConnection)
-        // for(count=0; count<10; count++){
-        //   waitFun().then(r => {
-        //     publishTest(startTime, natsConnection)
-        //   });
-        // }
-      });
-    } else{
-      throw 'Improper Invocation. Use npm start -- --command_subject <<sub>> ' +
-      '--request_subject <<sub>> --reply_subject <<sub>>'
+
+
+  initConnection(natsConnectOptions).then(natsConnection => {
+    if (!natsConnection) {
+      throw `Failed to establish connection to ${JSON.stringify(natsConnectOptions.servers)}`
     }
-  } catch (e){
-    console.log(e)
-    server.close(e)
-  }
+    initStreamConnection(natsConnection).then(isStreamConEstablished => {
+      if (!isStreamConEstablished) {
+        throw `Failed to establish stream connection`
+      }
+    });
+    // createSubscriber(argv.command_subject);
+    // addToRequestReplyMap(argv.reply_subject, argv.request_subject);
+    // createPullConsumer("66dcc41f-9561-4818-ac68-64f1d3331e90.a2708194-1a07-4261-9cfa-a0ec68ed5758.operations","a2708194-1a07-4261-9cfa-a0ec68ed5758")
+    // let count=0, startTime = new Date();
+    // console.log("Start Time: " + startTime)
+    // publishTest(startTime, natsConnection)
+    // for(count=0; count<10; count++){
+    //   waitFun().then(r => {
+    //     publishTest(startTime, natsConnection)
+    //   });
+    // 66dcc41f-9561-4818-ac68-64f1d3331e90.*.requests
+    // }
+    // publishMessage("test1", "I AM AWESOME").then(response => {
+    //   // res.send(response)
+    //   console.log(response)
+    // })
+    createPullConsumer('orchestrator.operations', 'orchestrator_stream')
+  });
+
+
+
+
+  // try{
+  //   if((argv.hasOwnProperty('command_subject') && typeof argv.command_subject == 'string') &&
+  //     (argv.hasOwnProperty('request_subject') && typeof argv.request_subject == 'string') &&
+  //     (argv.hasOwnProperty('reply_subject') && typeof argv.reply_subject == 'string')){
+  //     console.log(`Nats Client App listening on port ${port}`)
+  //
+  //   } else{
+  //     throw 'Improper Invocation. Use npm start -- --command_subject <<sub>> ' +
+  //     '--request_subject <<sub>> --reply_subject <<sub>>'
+  //   }
+  // } catch (e){
+  //   console.log(e)
+  //   server.close(e)
+  // }
 });
 
 // function publishTest(startTime, natsConnection){

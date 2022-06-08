@@ -50,7 +50,7 @@ function createSubscriber(subject: string){
 
 async function publishMessage(subject: string, message: any){
   console.log(replyRequestMap.has(subject))
-  if(replyRequestMap.has(subject)){
+  if(true){
     console.log("Requesting in" + subject)
     const requestOptions = {
       timeout: 5000,

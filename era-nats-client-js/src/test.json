@@ -1,5 +1,5 @@
 {
-  "subject": "08160976-c66a-4aea-aqqq-e853db231543.56c0224d-57d5-4d0a-aba8-5cf1ab12a765.requests",
+  "subject": "dbserver_registration",
   "message": {
     "method": "PATCH",
     "url": "era/v1.0/works/work_id",

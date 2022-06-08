@@ -6,6 +6,7 @@ import * as work from "./work.json";
 import * as request from "./test.json";
 import {response} from "express";
 import {TextEncoder} from "util";
+import {RetentionPolicy, StorageType, StreamConfig} from "nats/lib/src/nats-base-client";
 
 const express = require('express');
 const router = express.Router();
@@ -17,16 +18,18 @@ const sc = StringCodec();
 app.use(bodyParser.urlencoded({ extended: false }));
 app.use(bodyParser.json());
 
-const jwtAuth = jwtAuthenticator(cred.test152);
+const jwtAuth = jwtAuthenticator(cred.admin);
 // const credAuth = credsAuthenticator(new TextEncoder().encode(cred.qw));
 // CPAAS -server : 10.195.80.181
+// platform-nats-internal-cluster.nxengg.cloud
+// platform-nats-cluster1.nxengg.cloud
 // NATS_EC2 -server: tls://ec2-18-219-76-103.us-east-2.compute.amazonaws.com:4222
 
 // tls: {
 //   caFile: "/Users/shurya/poc/bash_scripts/ec2-ca.pem",
 // },
 const natsConnectOptions: ConnectionOptions = {
-  servers: ["10.15.152.152:4222"],
+  servers: ["tls://platform-nats-cluster1.nxengg.cloud:443"],
   authenticator: jwtAuth,
   debug: true,
   noEcho: true,
@@ -34,9 +37,11 @@ const natsConnectOptions: ConnectionOptions = {
   maxReconnectAttempts: 5,
   name: "TEEEEEETTTTT",
   tls: {
-    caFile: "/Users/shurya/poc/bash_scripts/152-ca.pem",
+    caFile: "/Users/shurya/poc/certs/cpaas-ca.pem",
   }
 };
+
+
 
 // ------------------------------START OF CONTROLLER----------------------------------------------------
 
@@ -104,24 +109,27 @@ const server = app.listen(port, 'localhost', () => {
       if (!natsConnection) {
         throw `Failed to establish connection to ${JSON.stringify(natsConnectOptions.servers)}`
       }
+      // publishMessage(request.subject, request.message)
       initStreamConnection(natsConnection).then(isStreamConEstablished => {
-        // createSubscriber("_INBOX.*.*")
-        // createSubscriber("tenant1.dbserv1.request", "tenant1.dbserv1.reply")
-        // createSubscriber("dbserver_registration", "res")
+      //   // createSubscriber("_INBOX.*.*")
+      //   // createSubscriber("tenant1.dbserv1.request", "tenant1.dbserv1.reply")
+      //   // createSubscriber("dbserver_registration", "res")
         if(!isStreamConEstablished){
           throw `Failed to establish stream connection`
         }
 
-        // removeStream("dbserv1_stream")
-        // removeDurableConsumer("dbserv1_stream","dbserv1")
-        // createSubscriber("dbserver_registration")
-        publishMessageToStream(work.message, work.subject).then(response => {
-          console.log(response)
-        })
 
-        // publishMessage(request.subject, request.message)
-
-        // addStream("orchestrator_stream","orchestrator.operations")
+      //
+      //   // removeStream("dbserv1_stream")
+      //   // removeDurableConsumer("dbserv1_stream","dbserv1")
+      //   createSubscriber("dbserver_registration")
+      //   // publishMessageToStream(work.message, work.subject).then(response => {
+      //   //   console.log(response)
+      //   // })
+      //
+      //
+      //
+      //   // addStream("orchestrator_stream","orchestrator.operations")
       });
     }).catch(err => {
       console.log(err)

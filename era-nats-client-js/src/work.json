@@ -95,7 +95,6 @@
         "value": "The operation is being aborted as per the user request"
       }
     ],
-    "actionArguments": [],
     "payload": {
       "nxClusterId": "57b66113-a6db-4d56-9ade-dd468ebd712d",
       "timeMachineInfo": [
@@ -354,5 +353,5 @@
     "LOG_DIRECTORY_PATH": "/home/era/era_base/logs/drivers/log_copy/",
     "LOG_FILE_NAME": "d8da2ca8-e531-442d-ab08-0859b9850968-2022-03-16-01:00:16.log"
   },
-  "subject": "orchestrator.operations"
+  "subject": "orchestrator.operations123"
 }
