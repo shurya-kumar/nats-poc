@@ -7,6 +7,7 @@ import {
   StringCodec
 } from "nats";
 import {NatsConnection} from "nats/lib/src/nats-base-client";
+import {publishMessage} from "./nats-connector";
 
 const sc = StringCodec();
 let natsStreamConnection: NatsConnection;
@@ -16,6 +17,7 @@ async function initStreamConnection(nc: NatsConnection): Promise<boolean>{
   natsStreamConnection = nc;
   try{
     jetStreamClient = nc.jetstream();
+    createPullConsumer("case","case")
     console.log("Created jetstream client")
     return true;
   } catch (e){
@@ -53,20 +55,26 @@ async function createPullConsumer(subject: string, durableName: string): Promise
     const done = (async () => {
       for await (const m of psub) {
         //start python
-        console.log(sc.decode(m.data));
+        console.log(m.seq);
+        // publishMessage(`admin.STREAM.MSG.DELETE.paggu`, JSON.stringify({
+        //   seq: m.seq,
+        //   no_erase: true
+        // })).then(res => {
+        //   console.log(res)
+        // })
         m.ack();
       }
     })();
 
 // To start receiving messages you pull the subscription
-    psub.pull({ batch: 5, expires: 5000 });
+    psub.pull({ batch: 5, expires: 1000 });
 
     setInterval(() => {
 
       console.log("Interval kick")
-      psub.pull({ batch: 5, expires: 5000 });
+      psub.pull({ batch: 5, expires: 2000 });
 
-    }, 5000);
+    }, 1000);
 
     return `Created pull customer with name ${durableName} for subject ${subject}`
   } catch (e){

@@ -18,7 +18,7 @@ const sc = StringCodec();
 app.use(bodyParser.urlencoded({ extended: false }));
 app.use(bodyParser.json());
 
-const jwtAuth = jwtAuthenticator(cred.admin);
+const jwtAuth = jwtAuthenticator(cred.jenkins1_external);
 // const credAuth = credsAuthenticator(new TextEncoder().encode(cred.qw));
 // CPAAS -server : 10.195.80.181
 // platform-nats-internal-cluster.nxengg.cloud
@@ -37,11 +37,9 @@ const natsConnectOptions: ConnectionOptions = {
   maxReconnectAttempts: 5,
   name: "TEEEEEETTTTT",
   tls: {
-    caFile: "/Users/shurya/poc/certs/cpaas-ca.pem",
+    caFile: "/Users/shurya/poc/certs/cpaas-ca.pem"
   }
 };
-
-
 
 // ------------------------------START OF CONTROLLER----------------------------------------------------
 

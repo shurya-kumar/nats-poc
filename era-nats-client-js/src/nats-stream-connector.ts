@@ -1,13 +1,17 @@
 import {
-  AckPolicy, ConsumerInfo,
-  JetStreamClient, Lister,
+  AckPolicy,
+  ConsumerInfo,
+  JetStreamClient,
+  Lister,
   NatsConnection,
+  ReplayPolicy,
   RetentionPolicy,
   StorageType,
   StreamConfig,
 } from "nats/lib/src/nats-base-client";
 import {JetStreamManager, StreamInfo} from "nats/lib/nats-base-client/types";
 import {StringCodec} from "nats";
+import {ConsumerOptsBuilderImpl} from "nats/lib/nats-base-client/jsconsumeropts";
 import {publishMessage} from "./nats-connector";
 
 const sc = StringCodec();
@@ -21,13 +25,64 @@ async function initStreamConnection(nc: NatsConnection): Promise<boolean>{
   try{
     jetStreamManager = await nc.jetstreamManager();
     jetStreamClient = nc.jetstream();
+
+    // addStream("f067b90c-ceab-4a53-9002-4d39205c226f_stream", "test").then(res => {
+    //   addDurableConsumer("f067b90c-ceab-4a53-9002-4d39205c226f_stream", "lol").then(res => {
+    //     removeDurableConsumer("f067b90c-ceab-4a53-9002-4d39205c226f_stream", "lol").then(res => {
+    //       removeStream("f067b90c-ceab-4a53-9002-4d39205c226f_stream")
+    //     })
+    //   })
+    // })
+
+    // addStream("f067b90c-ceab-4a53-9002-4d39205c226f_stream1", "test1").then(res => {
+    //   addDurableConsumer("f067b90c-ceab-4a53-9002-4d39205c226f_stream1", "lol").then(res => {
+    //     removeDurableConsumer("f067b90c-ceab-4a53-9002-4d39205c226f_stream1", "lol").then(res => {
+    //       removeStream("f067b90c-ceab-4a53-9002-4d39205c226f_stream1")
+    //     })
+    //   })
+    // })
+
+    // publishMessageToStream("test", "test1")
+
+    // jetStreamManager.consumers.list("junit").next().then(a => {
+    //   console.log(a)
+    // })
+    // startConsumer().then(res => {
+    //   console.log(res)
+    // })
+
+    // jetStreamManager.streams.delete("5d7154c9-e140-4d17-86b0-3fca75ae4c2e_stream").then(res => {
+    //   console.log(res)
+    // })
+
+    // jetStreamManager.streams.list().next().then(res => {
+    //   console.log(res[0].config)
+    // })
+    // jetStreamManager.consumers.info("aa8736a6-e36b-4829-a7f2-2cfd9281b556_stream", "244af421-5a39-4164-9531-8bfd75c0454d").then(res => {
+    //   console.log(res)
+    // })
+
+    // jetStreamManager.streams.list().next().then(res => {
+    //   console.log(res);
+    // })
+
+    // jetStreamClient.publish("hello",sc.encode("AD")).then(res => {
+    //   console.log(res)
+    // })
     // setInterval(function (){
-    //   publishMessage("1cabbbb8-29a6-4677-869a-a841a1542c34.e06223ec-5ab8-499d-aea6-640dc4253a52.operations", "POWERFULL")
-    // },2000)
+    //   publishMessageToStream( {
+    //     int: Math.random()
+    //   }, "test")
+    //
+    //   publishMessageToStream( {
+    //     date: new Date().toISOString()
+    //   }, "case")
+    //
+    // },500)
 
     const streamConfig: Partial<StreamConfig> = {
-      name: "nilesh",
-      subjects: ["nilesh"],
+      name: "junit",
+      subjects: ["test","case"],
       retention: RetentionPolicy.Workqueue,
       max_consumers: 5,
       storage: StorageType.File,
@@ -35,37 +90,53 @@ async function initStreamConnection(nc: NatsConnection): Promise<boolean>{
     };
 
     // setInterval(function (){
-      publishMessage("JS.ea9f94fc-a846-4184-add2-c98f4ce31046.STREAM.CREATE.nilesh",streamConfig).then(res => {
-        publishMessage("JS.ea9f94fc-a846-4184-add2-c98f4ce31046.STREAM.DELETE.nilesh",null);
-      })
+    //   publishMessage("$JS.API.STREAM.CREATE.junit",streamConfig).then(res => {
+    //     console.log(res)
+    //   })
+    // publishMessage("$JS.API.STREAM.INFO.paggu", null).then(res => {
+    //   console.log(res)
+    // })
     // },2000)
 
-
+    // publishMessage("$JS.API.CONSUMER.INFO.test.world",null)
 
 
 
     // _________________CONSUMER TESTING_________________________
 
+
+    // publishMessage("$JS.API.CONSUMER.DELETE.test.test",null);
+
     const consumerConfig = {
       "config": {
-        "durable_name":"nilesh",
-        "ack_policy":"explicit"
+        "durable_name":"test",
+        "ack_policy":"explicit",
+        "filter_subject": "test"
       },
-      "stream_name":"nilesh"
+      "stream_name":"junit"
     }
-    // publishMessage("JS.e7a2e0f9-cd2e-4097-b1ce-226beca62847.STREAM.INFO.nilesh", null)
-    // publishMessage("$JS.API.CONSUMER.DURABLE.CREATE.qwerty_stream.qwerty",consumerConfig)
+    // publishMessage("$JS.API.CONSUMER.DURABLE.CREATE.junit.test",consumerConfig);
+
+    const consumerConfig1 = {
+      "config": {
+        "durable_name":"case",
+        "ack_policy":"explicit",
+        "filter_subject": "case"
+      },
+      "stream_name":"junit"
+    }
+    // publishMessage("$JS.API.CONSUMER.DURABLE.CREATE.junit.case",consumerConfig1);
+
+
 
     // addDurableConsumer("nilesh", "nilesh");
 
 
-    // jetStreamManager.streams.list().next().then(res => {
-    //   console.log(res);
-    // })
-
-    // jetStreamManager.streams.info("pragna").then(res => {
-    //   console.log(res)
-    // });
+    // setInterval(function (){
+    //   jetStreamManager.streams.info("f4a0d235-f720-4e9e-83b4-89b9b17e7e1b_stream").then(res => {
+    //     console.log(res.state.messages)
+    //   });
+    // },500)
 
 
     // setInterval(function (){
@@ -115,9 +186,13 @@ async function initStreamConnection(nc: NatsConnection): Promise<boolean>{
 async function startConsumer() {
   try{
     console.log("Creating Pull Consumer");
-    const psub = await jetStreamClient.pullSubscribe("orchestrator.operations", {
-      config: { durable_name: "orchestrator_durable" }
-    });
+    const cons = new ConsumerOptsBuilderImpl({
+      ack_policy: AckPolicy.Explicit,
+      replay_policy: ReplayPolicy.Instant,
+      durable_name: "ayyo",
+
+    })
+    const psub = await jetStreamClient.pullSubscribe("test", cons);
 
     const done = (async () => {
       for await (const m of psub) {
@@ -152,7 +227,7 @@ async function addStream(streamName: string, subject: string): Promise<string>{
       retention: RetentionPolicy.Workqueue,
       max_consumers: 5,
       storage: StorageType.File,
-      num_replicas: 1
+      num_replicas: 3
     };
     const streamInfo: StreamInfo = await jetStreamManager.streams.add(streamConfig);
     return `Created stream with name ${streamName} and subject ${subject} on ${streamInfo.created}`
@@ -227,9 +302,12 @@ async function removeDurableConsumer(stream: string, durableName: string): Promi
 
 async function publishMessageToStream(message, subject){
   try{
-    await jetStreamClient.publish(subject, sc.encode(JSON.stringify(message)));
+    console.log("Publishing message")
+    await jetStreamClient.publish(subject, sc.encode(message));
+    console.log("Published message")
     return `Published message to stream on ${subject}`
   } catch (e){
+    console.log("Error message")
     console.log(e);
     return `Failed to publish message to stream ${subject}`
   }

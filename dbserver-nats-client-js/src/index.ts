@@ -11,19 +11,20 @@ const express = require('express');
 const router = express.Router();
 const bodyParser = require("body-parser");
 const port = 8000;
-const jwtAuth = jwtAuthenticator(cred.jenkins1_internal)
+const jwtAuth = jwtAuthenticator(cred.jwt)
 const natsConnectOptions: ConnectionOptions = {
-  servers: ["tls://platform-nats-internal-cluster.nxengg.cloud:443"],
+  servers: ["10.15.152.152:4222"],
   authenticator: jwtAuth,
-  debug: true,
+  debug: false,
   noEcho: true,
   ignoreClusterUpdates: true,
   maxReconnectAttempts: 5,
-  name: "Shurya",
-  tls: {
-    caFile: "/Users/shurya/poc/certs/cpaas-ca-int.pem"
-  }
+  name: "Shurya"
 };
+
+// tls: {
+//   caFile: "/Users/shurya/poc/certs/cpaas-ca-int.pem"
+// }
 
 const app = express();
 app.use(bodyParser.urlencoded({ extended: false }));
@@ -86,7 +87,7 @@ const server = app.listen(port, 'localhost', () => {
     //   // res.send(response)
     //   console.log(response)
     // })
-    createPullConsumer('orchestrator.operations', 'orchestrator_stream')
+    // createPullConsumer('orchestrator.operations', 'orchestrator_stream')
   });
 
 
