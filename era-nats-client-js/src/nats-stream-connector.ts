@@ -26,13 +26,15 @@ async function initStreamConnection(nc: NatsConnection): Promise<boolean>{
     jetStreamManager = await nc.jetstreamManager();
     jetStreamClient = nc.jetstream();
 
-    // addStream("f067b90c-ceab-4a53-9002-4d39205c226f_stream", "test").then(res => {
-    //   addDurableConsumer("f067b90c-ceab-4a53-9002-4d39205c226f_stream", "lol").then(res => {
-    //     removeDurableConsumer("f067b90c-ceab-4a53-9002-4d39205c226f_stream", "lol").then(res => {
-    //       removeStream("f067b90c-ceab-4a53-9002-4d39205c226f_stream")
-    //     })
-    //   })
+    // addStream("test_stream", "teste1").then(res => {
+      addEphemeralConsumer("test_stream", "e1").then(res => {
+        console.log(res)
+      })
     // })
+
+    setInterval(function (){
+      publishMessageToStream("qwe", "teste1")
+    }, 11000)
 
     // addStream("f067b90c-ceab-4a53-9002-4d39205c226f_stream1", "test1").then(res => {
     //   addDurableConsumer("f067b90c-ceab-4a53-9002-4d39205c226f_stream1", "lol").then(res => {
@@ -175,7 +177,7 @@ async function initStreamConnection(nc: NatsConnection): Promise<boolean>{
     // }, 10000)
 
 
-    console.log("Created jetstream manager and client")
+    // console.log("Created jetstream manager and client")
     return true;
   } catch (e){
     console.log(e);
@@ -190,7 +192,7 @@ async function startConsumer() {
       ack_policy: AckPolicy.Explicit,
       replay_policy: ReplayPolicy.Instant,
       durable_name: "ayyo",
-
+      ack_wait: 2000
     })
     const psub = await jetStreamClient.pullSubscribe("test", cons);
 
@@ -227,7 +229,7 @@ async function addStream(streamName: string, subject: string): Promise<string>{
       retention: RetentionPolicy.Workqueue,
       max_consumers: 5,
       storage: StorageType.File,
-      num_replicas: 3
+      num_replicas: 1
     };
     const streamInfo: StreamInfo = await jetStreamManager.streams.add(streamConfig);
     return `Created stream with name ${streamName} and subject ${subject} on ${streamInfo.created}`
@@ -269,6 +271,22 @@ async function removeStream(streamName: string): Promise<string>{
   }
 }
 
+async function addEphemeralConsumer(stream: string, name: string): Promise<any>{
+  try{
+
+    await jetStreamManager.consumers.add(stream, {
+      name: name,
+      ack_policy: AckPolicy.Explicit,
+      filter_subject: "teste1",
+      inactive_threshold: 40000
+    })
+
+  }catch (e){
+    console.log(e);
+    return `Failed to add ephemeral consumer to stream ${stream}`
+  }
+}
+
 async function addDurableConsumer(stream: string, durableName: string): Promise<string>{
   try{
     const consumerInfo: ConsumerInfo = await jetStreamManager.consumers.add(stream, {
@@ -303,7 +321,7 @@ async function removeDurableConsumer(stream: string, durableName: string): Promi
 async function publishMessageToStream(message, subject){
   try{
     console.log("Publishing message")
-    await jetStreamClient.publish(subject, sc.encode(message));
+    await jetStreamClient.publish(subject, jc.encode(JSON.stringify(message)));
     console.log("Published message")
     return `Published message to stream on ${subject}`
   } catch (e){

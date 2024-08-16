@@ -1,6 +1,6 @@
 import {createSubscriber, initConnection, closeClientConnection, publishMessage, addToRequestReplyMap} from "./nats-connector";
 import {initStreamConnection, addStream, addDurableConsumer, publishMessageToStream, removeStream, removeDurableConsumer, findStreamBySubject} from './nats-stream-connector';
-import {ConnectionOptions, credsAuthenticator, jwtAuthenticator, StringCodec} from "nats";
+import {ConnectionOptions, credsAuthenticator, jwtAuthenticator, StringCodec, tokenAuthenticator} from "nats";
 import * as cred from "./eratoken.json";
 import * as work from "./work.json";
 import * as request from "./test.json";
@@ -18,7 +18,7 @@ const sc = StringCodec();
 app.use(bodyParser.urlencoded({ extended: false }));
 app.use(bodyParser.json());
 
-const jwtAuth = jwtAuthenticator(cred.jenkins1_external);
+const jwtAuth = tokenAuthenticator(cred.auth);
 // const credAuth = credsAuthenticator(new TextEncoder().encode(cred.qw));
 // CPAAS -server : 10.195.80.181
 // platform-nats-internal-cluster.nxengg.cloud
@@ -29,16 +29,16 @@ const jwtAuth = jwtAuthenticator(cred.jenkins1_external);
 //   caFile: "/Users/shurya/poc/bash_scripts/ec2-ca.pem",
 // },
 const natsConnectOptions: ConnectionOptions = {
-  servers: ["tls://platform-nats-cluster1.nxengg.cloud:443"],
+  servers: ["127.0.0.1:4222"],
   authenticator: jwtAuth,
   debug: true,
   noEcho: true,
   ignoreClusterUpdates: true,
   maxReconnectAttempts: 5,
-  name: "TEEEEEETTTTT",
-  tls: {
-    caFile: "/Users/shurya/poc/certs/cpaas-ca.pem"
-  }
+  name: "TEEEEEETTTTT"
+  // tls: {
+  //   caFile: "/Users/shurya/poc/certs/cpaas-ca.pem"
+  // }
 };
 
 // ------------------------------START OF CONTROLLER----------------------------------------------------
@@ -107,14 +107,15 @@ const server = app.listen(port, 'localhost', () => {
       if (!natsConnection) {
         throw `Failed to establish connection to ${JSON.stringify(natsConnectOptions.servers)}`
       }
+      createSubscriber("testSub")
       // publishMessage(request.subject, request.message)
-      initStreamConnection(natsConnection).then(isStreamConEstablished => {
+      // initStreamConnection(natsConnection).then(isStreamConEstablished => {
       //   // createSubscriber("_INBOX.*.*")
       //   // createSubscriber("tenant1.dbserv1.request", "tenant1.dbserv1.reply")
       //   // createSubscriber("dbserver_registration", "res")
-        if(!isStreamConEstablished){
-          throw `Failed to establish stream connection`
-        }
+      //   if(!isStreamConEstablished){
+      //     throw `Failed to establish stream connection`
+      //   }
 
 
       //
@@ -128,7 +129,7 @@ const server = app.listen(port, 'localhost', () => {
       //
       //
       //   // addStream("orchestrator_stream","orchestrator.operations")
-      });
+      // });
     }).catch(err => {
       console.log(err)
     });
