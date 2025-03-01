@@ -7,6 +7,7 @@ import * as request from "./test.json";
 import {response} from "express";
 import {TextEncoder} from "util";
 import {RetentionPolicy, StorageType, StreamConfig} from "nats/lib/src/nats-base-client";
+import {usernamePasswordAuthenticator} from "nats/lib/nats-base-client/authenticator";
 
 const express = require('express');
 const router = express.Router();
@@ -19,6 +20,7 @@ app.use(bodyParser.urlencoded({ extended: false }));
 app.use(bodyParser.json());
 
 const jwtAuth = tokenAuthenticator(cred.auth);
+const basicAuth = usernamePasswordAuthenticator("ndb", "Nutanix.1");
 // const credAuth = credsAuthenticator(new TextEncoder().encode(cred.qw));
 // CPAAS -server : 10.195.80.181
 // platform-nats-internal-cluster.nxengg.cloud
@@ -29,16 +31,17 @@ const jwtAuth = tokenAuthenticator(cred.auth);
 //   caFile: "/Users/shurya/poc/bash_scripts/ec2-ca.pem",
 // },
 const natsConnectOptions: ConnectionOptions = {
-  servers: ["127.0.0.1:4222"],
+  servers: ["tls://127.0.0.1:4222"],
   authenticator: jwtAuth,
   debug: true,
   noEcho: true,
   ignoreClusterUpdates: true,
   maxReconnectAttempts: 5,
-  name: "TEEEEEETTTTT"
-  // tls: {
-  //   caFile: "/Users/shurya/poc/certs/cpaas-ca.pem"
-  // }
+  tls: {
+    caFile: "/Users/shuryakumar.ns/Downloads/spiffe/rootCA-cert.pem",
+    keyFile: "/Users/shuryakumar.ns/Downloads/spiffe/client-key.pem",
+    certFile: "/Users/shuryakumar.ns/Downloads/spiffe/client-cert.pem"
+  }
 };
 
 // ------------------------------START OF CONTROLLER----------------------------------------------------
