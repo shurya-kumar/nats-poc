@@ -38,9 +38,9 @@ const natsConnectOptions: ConnectionOptions = {
   ignoreClusterUpdates: true,
   maxReconnectAttempts: 5,
   tls: {
-    caFile: "/Users/shuryakumar.ns/Downloads/spiffe/rootCA-cert.pem",
-    keyFile: "/Users/shuryakumar.ns/Downloads/spiffe/client-key.pem",
-    certFile: "/Users/shuryakumar.ns/Downloads/spiffe/client-cert.pem"
+    caFile: "/Users/shuryakumar.ns/Downloads/spire/ca.pem",
+    keyFile: "/Users/shuryakumar.ns/Downloads/spire/dbserver.key",
+    certFile: "/Users/shuryakumar.ns/Downloads/spire/dbserver.pem"
   }
 };
 

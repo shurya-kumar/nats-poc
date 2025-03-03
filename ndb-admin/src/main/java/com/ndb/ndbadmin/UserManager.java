@@ -35,14 +35,14 @@ public class UserManager {
 
       // Load the client keystore (PKCS12)
       KeyStore keyStore = KeyStore.getInstance("PKCS12");
-      keyStore.load(new FileInputStream("/Users/shuryakumar.ns/Downloads/spiffe/auth-keystore.p12"), "changeit".toCharArray());
+      keyStore.load(new FileInputStream("/Users/shuryakumar.ns/Downloads/spire/client-keystore.p12"), "changeit".toCharArray());
 
       KeyManagerFactory kmf = KeyManagerFactory.getInstance("SunX509");
       kmf.init(keyStore, "changeit".toCharArray());
 
       // Load the truststore (JKS) containing the Root CA
       KeyStore trustStore = KeyStore.getInstance("JKS");
-      trustStore.load(new FileInputStream("/Users/shuryakumar.ns/Downloads/spiffe/truststore.jks"), "changeit".toCharArray());
+      trustStore.load(new FileInputStream("/Users/shuryakumar.ns/Downloads/spire/truststore.jks"), "changeit".toCharArray());
 
       TrustManagerFactory tmf = TrustManagerFactory.getInstance("SunX509");
       tmf.init(trustStore);
