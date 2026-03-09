@@ -15,15 +15,7 @@ import javax.net.ssl.KeyManagerFactory;
 import javax.net.ssl.SSLContext;
 import javax.net.ssl.TrustManagerFactory;
 import java.io.FileInputStream;
-import java.nio.file.Paths;
-import java.security.KeyFactory;
 import java.security.KeyStore;
-import java.security.PrivateKey;
-import java.security.SecureRandom;
-import java.security.cert.CertificateFactory;
-import java.security.cert.X509Certificate;
-import java.security.spec.PKCS8EncodedKeySpec;
-import java.util.Base64;
 import java.util.concurrent.CompletableFuture;
 
 @Component
@@ -35,14 +27,14 @@ public class UserManager {
 
       // Load the client keystore (PKCS12)
       KeyStore keyStore = KeyStore.getInstance("PKCS12");
-      keyStore.load(new FileInputStream("/Users/shuryakumar.ns/Downloads/spiffe/auth-keystore.p12"), "changeit".toCharArray());
+      keyStore.load(new FileInputStream("/Users/harjot.kaur/nats-poc/certs/client.p12"), "changeit".toCharArray());
 
       KeyManagerFactory kmf = KeyManagerFactory.getInstance("SunX509");
       kmf.init(keyStore, "changeit".toCharArray());
 
       // Load the truststore (JKS) containing the Root CA
       KeyStore trustStore = KeyStore.getInstance("JKS");
-      trustStore.load(new FileInputStream("/Users/shuryakumar.ns/Downloads/spiffe/truststore.jks"), "changeit".toCharArray());
+      trustStore.load(new FileInputStream("/Users/harjot.kaur/nats-poc/certs/truststore.jks"), "changeit".toCharArray());
 
       TrustManagerFactory tmf = TrustManagerFactory.getInstance("SunX509");
       tmf.init(trustStore);
@@ -67,35 +59,53 @@ public class UserManager {
           .sslContext(sslContext)
           .errorListener(new ErrorListener() {})
           .connectionName("AuthCallbackService")
+          // Set user to "auth-service" so NATS matches auth_users and bypasses auth_callout
+          .userInfo("auth-service", "")
           .build();
 
-      try (Connection nc = Nats.connect(options)) {
-        Endpoint endpoint = Endpoint.builder()
-            .name("AuthCallbackEndpoint")
-            .subject("$SYS.REQ.USER.AUTH")
-            .build();
+      // Connect to NATS and start auth callout service in a separate thread
+      // This prevents blocking Spring Boot startup
+      new Thread(() -> {
+        try {
+          Connection nc = Nats.connect(options);
+          System.out.println("[AUTH_CALLOUT] Connected to NATS server");
+          
+          Endpoint endpoint = Endpoint.builder()
+              .name("AuthCallbackEndpoint")
+              .subject("$SYS.REQ.USER.AUTH")
+              .build();
 
-        AuthCalloutHandler handler = new AuthCalloutHandler(nc);
+          AuthCalloutHandler handler = new AuthCalloutHandler(nc);
+          System.out.println("[AUTH_CALLOUT] Created AuthCalloutHandler");
 
-        ServiceEndpoint serviceEndpoint = ServiceEndpoint.builder()
-            .endpoint(endpoint)
-            .handler(handler)
-            .build();
+          ServiceEndpoint serviceEndpoint = ServiceEndpoint.builder()
+              .endpoint(endpoint)
+              .handler(handler)
+              .build();
 
-        Service acService = new ServiceBuilder()
-            .connection(nc)
-            .name("AuthCallbackService")
-            .version("0.0.1")
-            .addServiceEndpoint(serviceEndpoint)
-            .build();
+          Service acService = new ServiceBuilder()
+              .connection(nc)
+              .name("AuthCallbackService")
+              .version("0.0.1")
+              .addServiceEndpoint(serviceEndpoint)
+              .build();
 
-        CompletableFuture<Boolean> serviceStoppedFuture = acService.startService();
-        serviceStoppedFuture.join();
-
-
-      } catch (Exception e) {
-        e.printStackTrace();
-      }
+          System.out.println("[AUTH_CALLOUT] Starting AuthCallout service...");
+          CompletableFuture<Boolean> serviceStoppedFuture = acService.startService();
+          System.out.println("[AUTH_CALLOUT] AuthCallout service started and subscribed to $SYS.REQ.USER.AUTH");
+          System.out.println("[AUTH_CALLOUT] Service is ready to handle authentication requests");
+          System.out.println("[AUTH_CALLOUT] Waiting for client connections...");
+          
+          // Wait for service to stop (this will block this thread, but not Spring Boot startup)
+          serviceStoppedFuture.join();
+          
+        } catch (Exception e) {
+          System.err.println("[AUTH_CALLOUT] Error starting auth callout service: " + e.getMessage());
+          e.printStackTrace();
+        }
+      }, "AuthCalloutService-Thread").start();
+      
+      System.out.println("[AUTH_CALLOUT] AuthCallout service initialization started in background thread");
     } catch (Exception e) {
       throw new RuntimeException(e);
     }
