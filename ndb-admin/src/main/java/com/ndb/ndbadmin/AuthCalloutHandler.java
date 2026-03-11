@@ -131,13 +131,56 @@ public class AuthCalloutHandler implements ServiceMessageHandler {
   }
 
   private String extractSpiffeUri(AuthorizationRequest ar) {
-    if (ar.clientTls == null || ar.clientTls.certs == null || ar.clientTls.certs.isEmpty()) {
+    if (ar.clientTls == null) {
+      System.out.println("[HANDLER] No client TLS info in authorization request");
+      return null;
+    }
+
+    System.out.println("[HANDLER] clientTls.certs: " + ar.clientTls.certs);
+    System.out.println("[HANDLER] clientTls.verifiedChains: " +
+        (ar.clientTls.verifiedChains != null ? "size=" + ar.clientTls.verifiedChains.size() : "null"));
+
+    String pem = null;
+    // Try certs first (production behavior), fall back to verifiedChains
+    if (ar.clientTls.certs != null && !ar.clientTls.certs.isEmpty()) {
+      pem = ar.clientTls.certs.get(0);
+      System.out.println("[HANDLER] Using cert from clientTls.certs");
+    } else if (ar.clientTls.verifiedChains != null && !ar.clientTls.verifiedChains.isEmpty()) {
+      List<String> firstChain = ar.clientTls.verifiedChains.get(0);
+      System.out.println("[HANDLER] verifiedChains[0] size=" + firstChain.size());
+      for (int i = 0; i < firstChain.size(); i++) {
+        String entry = firstChain.get(i);
+        System.out.println("[HANDLER] verifiedChains[0][" + i + "] length=" +
+            (entry != null ? entry.length() : "null") +
+            " preview=" + (entry != null && entry.length() > 40 ? entry.substring(0, 40) + "..." : entry));
+      }
+      if (!firstChain.isEmpty() && firstChain.get(0) != null && !firstChain.get(0).isBlank()) {
+        pem = firstChain.get(0);
+        System.out.println("[HANDLER] Using cert from clientTls.verifiedChains");
+      }
+    }
+
+    if (pem == null || pem.isBlank()) {
       System.out.println("[HANDLER] No client certificates present in authorization request");
       return null;
     }
 
+    // The library may leave JSON artifacts in the PEM string:
+    // - literal \n instead of real newlines
+    // - escaped forward slashes \/
+    // - surrounding quote characters
+    pem = pem.replace("\\n", "\n");
+    pem = pem.replace("\\/", "/");
+    pem = pem.trim();
+    if (pem.startsWith("\"")) pem = pem.substring(1);
+    if (pem.endsWith("\"")) pem = pem.substring(0, pem.length() - 1);
+    pem = pem.trim();
+    System.out.println("[HANDLER] PEM after unescape (length=" + pem.length() + "):");
+    System.out.println(pem);
+    System.out.println("[HANDLER] PEM ends with: [" +
+        pem.substring(Math.max(0, pem.length() - 40)) + "]");
+
     try {
-      String pem = ar.clientTls.certs.get(0);
       CertificateFactory cf = CertificateFactory.getInstance("X.509");
       X509Certificate cert = (X509Certificate) cf.generateCertificate(
           new ByteArrayInputStream(pem.getBytes()));
@@ -173,40 +216,24 @@ public class AuthCalloutHandler implements ServiceMessageHandler {
 
 
   private String extractClientIdFromSpiffeUri(String spiffeUri) {
-    try {
-      URI uri = URI.create(spiffeUri);
-      String path = uri.getPath();
-      if (path == null || path.isEmpty()) {
-        System.out.println("[HANDLER] SPIFFE URI has no path: " + spiffeUri);
-        return null;
-      }
-
-      String[] segments = path.split("/");
-      // Path "/workload_type/client_id" splits into ["", "workload_type", "client_id"]
-      if (segments.length < 3) {
-        System.out.println("[HANDLER] SPIFFE URI path does not contain enough segments: " + spiffeUri);
-        return null;
-      }
-
-      String workloadType = segments[1];
-      String clientId = segments[2];
-
-      if (!"spire-agent".equals(workloadType) && !"db-server".equals(workloadType)) {
-        System.out.println("[HANDLER] Unknown workload type [" + workloadType + "] in SPIFFE URI: " + spiffeUri);
-        return null;
-      }
-
-      if (clientId.isEmpty()) {
-        System.out.println("[HANDLER] Empty client ID in SPIFFE URI: " + spiffeUri);
-        return null;
-      }
-
-      return clientId;
-    } catch (IllegalArgumentException e) {
-      System.err.println("[HANDLER] Malformed SPIFFE URI: " + spiffeUri);
-      e.printStackTrace();
+    String path = URI.create(spiffeUri).getPath();
+    if (path == null || path.isEmpty()) {
+      System.out.println("[HANDLER] SPIFFE URI has no path: " + spiffeUri);
       return null;
     }
+
+    if (!path.startsWith("/db-server/")) {
+      System.out.println("[HANDLER] Unsupported workload type in SPIFFE URI: " + spiffeUri);
+      return null;
+    }
+
+    String clientId = path.substring("/db-server/".length());
+    if (clientId.isEmpty()) {
+      System.out.println("[HANDLER] No client ID found in SPIFFE URI: " + spiffeUri);
+      return null;
+    }
+
+    return clientId;
   }
 
   private void respondAuthCallout(ServiceMessage smsg, AuthorizationRequest ar, String userJwt, String error) {
