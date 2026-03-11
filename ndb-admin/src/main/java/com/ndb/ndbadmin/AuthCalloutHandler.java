@@ -48,11 +48,9 @@ public class AuthCalloutHandler implements ServiceMessageHandler {
     System.out.println("[HANDLER] ===== AUTH CALLOUT REQUEST RECEIVED =====");
     System.out.println(serviceMessage.getData());
 
-    String claimBody;
     Claim claim;
     try {
-      claimBody = getClaimBody(serviceMessage.getData());
-      claim = new Claim(claimBody);
+      claim = new Claim(getClaimBody(serviceMessage.getData()));
     } catch (Exception e) {
       System.err.println("[HANDLER] Failed to get claim: " + e.getMessage());
       respondAuthCallout(serviceMessage, null, null, "Failed to parse request data");
@@ -69,7 +67,7 @@ public class AuthCalloutHandler implements ServiceMessageHandler {
     System.out.println("[HANDLER] ConnectOpts AuthToken: " + ar.connectOpts.authToken);
 
     // Step 1: Try certificate-based authentication (SPIFFE URI from SANs)
-    String spiffeUri = extractSpiffeUriFromClaimBody(claimBody);
+    String spiffeUri = extractSpiffeUri(ar);
 
     if (spiffeUri != null) {
       System.out.println("[HANDLER] Extracted SPIFFE URI from certificate SANs: " + spiffeUri);
@@ -132,49 +130,32 @@ public class AuthCalloutHandler implements ServiceMessageHandler {
     }
   }
 
-  private String extractSpiffeUriFromClaimBody(String claimBody) {
+  private String extractSpiffeUri(AuthorizationRequest ar) {
+    if (ar.clientTls == null || ar.clientTls.certs == null || ar.clientTls.certs.isEmpty()) {
+      System.out.println("[HANDLER] No client certificates present in authorization request");
+      return null;
+    }
+
     try {
-      String searchStart = "-----BEGIN CERTIFICATE-----";
-      String searchEnd = "-----END CERTIFICATE-----";
-
-      int startIdx = claimBody.indexOf(searchStart);
-      if (startIdx == -1) {
-        System.out.println("[HANDLER] No certificate found in claim body");
-        return null;
-      }
-
-      int endIdx = claimBody.indexOf(searchEnd, startIdx);
-      if (endIdx == -1) {
-        System.out.println("[HANDLER] Incomplete certificate in claim body");
-        return null;
-      }
-
-      String pemRaw = claimBody.substring(startIdx, endIdx + searchEnd.length());
-      String pem = pemRaw.replace("\\n", "\n");
-
-      System.out.println("[HANDLER] Found certificate PEM, parsing...");
-
+      String pem = ar.clientTls.certs.get(0);
       CertificateFactory cf = CertificateFactory.getInstance("X.509");
       X509Certificate cert = (X509Certificate) cf.generateCertificate(
           new ByteArrayInputStream(pem.getBytes()));
 
-      System.out.println("[HANDLER] Certificate Subject: " + cert.getSubjectX500Principal().getName());
+      System.out.println("[HANDLER] Parsed client certificate, subject: " + cert.getSubjectX500Principal().getName());
 
       Collection<List<?>> sans = cert.getSubjectAlternativeNames();
       if (sans == null) {
-        System.out.println("[HANDLER] No SANs found in certificate");
+        System.out.println("[HANDLER] No SANs found in client certificate");
         return null;
       }
 
       for (List<?> san : sans) {
         Integer type = (Integer) san.get(0);
         Object value = san.get(1);
-        System.out.println("[HANDLER] SAN type=" + type + " value=" + value);
-
         if (type == 6 && value instanceof String) {
           String uri = (String) value;
           if (uri.startsWith("spiffe://")) {
-            System.out.println("[HANDLER] Found SPIFFE URI in certificate SANs: " + uri);
             return uri;
           }
         }
@@ -184,7 +165,7 @@ public class AuthCalloutHandler implements ServiceMessageHandler {
       return null;
 
     } catch (Exception e) {
-      System.err.println("[HANDLER] Error parsing certificate from claim: " + e.getMessage());
+      System.err.println("[HANDLER] Error parsing client certificate: " + e.getMessage());
       e.printStackTrace();
       return null;
     }
