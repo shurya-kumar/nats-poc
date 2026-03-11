@@ -72,83 +72,41 @@ function createSubscriber(subject: string, requestSubject?: string) {
   if (!!requestSubject) {
     replyRequestMap.set(requestSubject, subject);
   }
-  // (async () => {
-  //   for await (const m of subscription) {
-  //
-  //   // At request level
-  //     const agent = new https.Agent({
-  //       rejectUnauthorized: false
-  //     });
-  //     console.log(`[${subscription.getSubject()} - ${subscription.getProcessed()}]: ${sc.decode(m.data)}`);
-  //     console.log(m.reply)
-  //     // TODO: Parse the json object and make API call if request subject
-  //     // if (!!m.reply) {
-  //     //   if(subscription.getSubject().toLowerCase() == "dbserver_registration"){
-  //     //     let request = JSON.parse(sc.decode(m.data));
-  //     //     console.log(request)
-  //     //     axios.post("http://localhost:7000/add-stream", {
-  //     //       stream: "dbserv1_stream",
-  //     //       subject: `tenant1.${request.dbserver_uuid}.operations`
-  //     //     }).then(streamS => {
-  //     //
-  //     //
-  //     //       console.log("Created Stream");
-  //     //       axios.post("http://localhost:7000/add-durable-customer", {
-  //     //         stream: "dbserv1_stream",
-  //     //         durableName: `${request.dbserver_uuid}`
-  //     //       }).then(customerS => {
-  //     //
-  //     //
-  //     //         m.respond(jc.encode({
-  //     //           "cred": "eyJ0eXAiOiJKV1QiLCJhbGciOiJlZDI1NTE5LW5rZXkifQ.eyJqdGkiOiJJUlU1Sk1SQTdJNlBFNlJFRUpWNldHSUlTTFRGWE1CMlhFTUZFTEFERjU0UEZIQlNITU9RIiwiaWF0IjoxNjQ4NTU4MjAyLCJpc3MiOiJBREdCVjRBSFpUWUJQUDNTR05YQ1dVV0RCTUVEWDVIVDJIVE5KRTVVQ0ZHWFUyNVJCM1hEV0EzMyIsIm5hbWUiOiJ0ZXN0Iiwic3ViIjoiVURFWk9KMkJQVlFMSE9VS0lHQ1dURENMWFdGVk5IVEQ1RDZRNVFaQUpVNERJUjVSQ043WTdNRFMiLCJuYXRzIjp7InB1YiI6e30sInN1YiI6e30sInN1YnMiOi0xLCJkYXRhIjotMSwicGF5bG9hZCI6LTEsImJlYXJlcl90b2tlbiI6dHJ1ZSwidHlwZSI6InVzZXIiLCJ2ZXJzaW9uIjoyfX0.gat2NtcB-8uCJd1n1z0jli1Dtzd_gC5wMgO-3EHUuJPGib6fBppzd7u6Rac5TNmMFlbH8xncNLQd0ysJPAA6Aw",
-  //     //           "tenant_id": "tenant1"
-  //     //         }));
-  //     //       })
-  //     //     })
-  //     //
-  //     //     // addStream("ops_stream", "test").then(streamSuccess => {
-  //     //     //   console.log("Created stream");
-  //     //     //   addDurableConsumer("ops_stream", ).then(consumerSuccess => {
-  //     //     //     console.log("Created consumer");
-  //     //     //
-  //     //     //   });
-  //     //     // });
-  //     //
-  //     //   } else if(subscription.getSubject().toLowerCase().endsWith("request")){
-  //     //     m.respond(jc.encode({
-  //     //       "response": {
-  //     //         "ok": "true",
-  //     //         "status_code": 200,
-  //     //         "content": JSON.stringify({"message": "You got served!!"})
-  //     //       },
-  //     //       "error": null
-  //     //     }));
-  //     //   } else {
-  //     //     console.log("----------------")
-  //     //     console.log(m.reply)
-  //     //     m.respond(jc.encode({
-  //     //       "response": {
-  //     //         "Why": "PLEASE"
-  //     //       }
-  //     //     }))
-  //     //   }
-  //     //
-  //     //   // axios.get('https://10.50.89.68/era/v0.9/databases/count-summary',{
-  //     //   //   httpsAgent: agent,
-  //     //   //   headers: {
-  //     //   //     Authorization: "Basic YWRtaW46TnV0YW5peC4x"
-  //     //   //   }
-  //     //   // })
-  //     //   //   .then(response => {
-  //     //   //     response.data.id = m.data + '-' + subscription.getSubject() + '-' + subscription.getProcessed();
-  //     //   //     m.respond(jc.encode(JSON.stringify(response.data)))
-  //     //   //   })
-  //     //   //   .catch(error => {
-  //     //   //     console.log(error);
-  //     //   //   });
-  //     // }
-  //   }
-  // })();
+  
+  // Process incoming messages and respond if needed
+  (async () => {
+    for await (const m of subscription) {
+      console.log(`[${subscription.getSubject()} - ${subscription.getProcessed()}]: ${sc.decode(m.data)}`);
+      console.log(`Reply subject: ${m.reply}`);
+      
+      // If message has a reply subject, respond to it
+      if (!!m.reply) {
+        // Check if this is a request subject (ends with "request")
+        if(subscription.getSubject().toLowerCase().endsWith("request")){
+          const response = {
+            "response": {
+              "ok": "true",
+              "status_code": 200,
+              "content": JSON.stringify({"message": "You got served!!", "received": sc.decode(m.data)})
+            },
+            "error": null
+          };
+          m.respond(jc.encode(response));
+          console.log(`Responded to request on ${subscription.getSubject()}`);
+        } else {
+          // Default response for other subjects
+          const response = {
+            "response": {
+              "message": `Received message on ${subscription.getSubject()}`,
+              "data": sc.decode(m.data)
+            }
+          };
+          m.respond(jc.encode(response));
+          console.log(`Responded to message on ${subscription.getSubject()}`);
+        }
+      }
+    }
+  })();
 }
 
 async function publishMessage(subject: string, message: any) {

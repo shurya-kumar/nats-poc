@@ -38,9 +38,13 @@ const natsConnectOptions: ConnectionOptions = {
   ignoreClusterUpdates: true,
   maxReconnectAttempts: 5,
   tls: {
-    caFile: "/Users/shuryakumar.ns/Downloads/spiffe/rootCA-cert.pem",
-    keyFile: "/Users/shuryakumar.ns/Downloads/spiffe/client-key.pem",
-    certFile: "/Users/shuryakumar.ns/Downloads/spiffe/client-cert.pem"
+    caFile: "/Users/harjot.kaur/nats-poc/certs/ca.cert",
+    keyFile: "/Users/harjot.kaur/nats-poc/certs/client.key",
+    certFile: "/Users/harjot.kaur/nats-poc/certs/client.cert",
+    // Disable hostname verification for local development
+    // The certificate is valid but doesn't include localhost/127.0.0.1 in SANs
+    // @ts-ignore - checkServerIdentity is a valid Node.js TLS option
+    checkServerIdentity: () => undefined
   }
 };
 
@@ -111,28 +115,14 @@ const server = app.listen(port, 'localhost', () => {
         throw `Failed to establish connection to ${JSON.stringify(natsConnectOptions.servers)}`
       }
       createSubscriber("testSub")
-      // publishMessage(request.subject, request.message)
-      // initStreamConnection(natsConnection).then(isStreamConEstablished => {
-      //   // createSubscriber("_INBOX.*.*")
-      //   // createSubscriber("tenant1.dbserv1.request", "tenant1.dbserv1.reply")
-      //   // createSubscriber("dbserver_registration", "res")
-      //   if(!isStreamConEstablished){
-      //     throw `Failed to establish stream connection`
-      //   }
-
-
-      //
-      //   // removeStream("dbserv1_stream")
-      //   // removeDurableConsumer("dbserv1_stream","dbserv1")
-      //   createSubscriber("dbserver_registration")
-      //   // publishMessageToStream(work.message, work.subject).then(response => {
-      //   //   console.log(response)
-      //   // })
-      //
-      //
-      //
-      //   // addStream("orchestrator_stream","orchestrator.operations")
-      // });
+      // Initialize JetStream connection for stream operations
+      initStreamConnection(natsConnection).then(isStreamConEstablished => {
+        if(!isStreamConEstablished){
+          console.error(`Failed to establish stream connection`)
+        } else {
+          console.log("JetStream connection established successfully")
+        }
+      });
     }).catch(err => {
       console.log(err)
     });

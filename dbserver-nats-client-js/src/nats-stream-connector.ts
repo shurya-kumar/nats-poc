@@ -17,6 +17,8 @@ async function initStreamConnection(nc: NatsConnection): Promise<boolean>{
   natsStreamConnection = nc;
   try{
     jetStreamClient = nc.jetstream();
+    // Commented out automatic pull consumer creation - streams need to be created first
+    // Use the /create-pull-consumer API endpoint after creating a stream
     createPullConsumer("case","case")
     console.log("Created jetstream client")
     return true;

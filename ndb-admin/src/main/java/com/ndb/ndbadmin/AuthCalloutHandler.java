@@ -6,10 +6,13 @@ import io.nats.nkey.NKey;
 import io.nats.service.ServiceMessage;
 import io.nats.service.ServiceMessageHandler;
 
+import java.io.ByteArrayInputStream;
 import java.io.IOException;
+import java.net.URI;
 import java.security.GeneralSecurityException;
-import java.util.HashMap;
-import java.util.Map;
+import java.security.cert.CertificateFactory;
+import java.security.cert.X509Certificate;
+import java.util.*;
 
 import static io.nats.jwt.JwtUtils.getClaimBody;
 
@@ -30,73 +33,229 @@ public class AuthCalloutHandler implements ServiceMessageHandler {
           .pub(new Permission().allow("test", "testSub"))
           .sub(new Permission().allow("testSub"));
       NATS_USERS.put("hello", helloTokenUser);
+
+      AuthCalloutUser spiffeUser = new AuthCalloutUser()
+          .pub(new Permission().allow(">"))
+          .sub(new Permission().allow(">"));
+      NATS_USERS.put("nats-client", spiffeUser);
     } catch (Exception e) {
       throw new RuntimeException(e);
     }
-
   }
 
   @Override
   public void onMessage(ServiceMessage serviceMessage) {
+    System.out.println("[HANDLER] ===== AUTH CALLOUT REQUEST RECEIVED =====");
     System.out.println(serviceMessage.getData());
 
+    Claim claim;
     try {
+      claim = new Claim(getClaimBody(serviceMessage.getData()));
+    } catch (Exception e) {
+      System.err.println("[HANDLER] Failed to get claim: " + e.getMessage());
+      respondAuthCallout(serviceMessage, null, null, "Failed to parse request data");
+      return;
+    }
 
-      Claim claim = new Claim(getClaimBody(serviceMessage.getData()));
-      System.out.println("[HANDLER] Claim-Request : " + claim.toJson());
+    AuthorizationRequest ar = claim.authorizationRequest;
+    if (ar == null) {
+      System.err.println("[HANDLER] Invalid Authorization Request Claim");
+      respondAuthCallout(serviceMessage, null, null, "Invalid Authorization Request Claim");
+      return;
+    }
+    System.out.println("[HANDLER] ConnectOpts User: " + ar.connectOpts.user);
+    System.out.println("[HANDLER] ConnectOpts AuthToken: " + ar.connectOpts.authToken);
 
+    // Step 1: Try certificate-based authentication (SPIFFE URI from SANs)
+    String spiffeUri = extractSpiffeUri(ar);
 
-      AuthorizationRequest ar = claim.authorizationRequest;
-      if (ar == null) {
-        System.err.println("Invalid Authorization Request Claim");
+    if (spiffeUri != null) {
+      System.out.println("[HANDLER] Extracted SPIFFE URI from certificate SANs: " + spiffeUri);
+
+      String clientId = extractClientIdFromSpiffeUri(spiffeUri);
+      if (clientId == null) {
+        System.err.println("[HANDLER] Failed to extract client ID from SPIFFE URI: " + spiffeUri);
+        respondAuthCallout(serviceMessage, ar, null, "Invalid SPIFFE URI format");
         return;
       }
-      System.out.println("[HANDLER] Auth Request  : " + ar.toJson());
+      System.out.println("[HANDLER] Extracted client ID [" + clientId + "] from SPIFFE URI");
 
-//     pcIam.validate(ar.connectOpts.jwt)
-      AuthCalloutUser acUser = NATS_USERS.get(ar.connectOpts.authToken);
+      AuthCalloutUser acUser = NATS_USERS.get(clientId);
       if (acUser == null) {
-
-        respond(serviceMessage, ar, null, "No user found");
+        System.err.println("[HANDLER] No user found for clientId: " + clientId);
+        respondAuthCallout(serviceMessage, ar, null, "No user found for client ID: " + clientId);
         return;
       }
 
+      System.out.println("[HANDLER] Authenticated user: " + clientId + " (method: CERTIFICATE_SPIFFE)");
 
+      try {
+        UserClaim uc = new UserClaim().pub(acUser.pub).sub(acUser.sub).resp(acUser.resp);
+        String userJwt = new ClaimIssuer().aud("NDB").name(clientId)
+            .iss(USER_SIGNING_PUBLIC_KEY).sub(ar.userNkey).nats(uc).issueJwt(USER_SIGNING_NKEY);
+        respondAuthCallout(serviceMessage, ar, userJwt, null);
+      } catch (Exception e) {
+        System.err.println("[HANDLER] Error issuing JWT: " + e.getMessage());
+        e.printStackTrace();
+      }
+      return;
+    }
+
+    // Step 2: Fall back to authToken (existing workflow)
+    System.out.println("[HANDLER] No certificate/SPIFFE URI found, falling back to authToken workflow");
+
+    if (ar.connectOpts.authToken == null || ar.connectOpts.authToken.isEmpty()) {
+      System.err.println("[HANDLER] No Auth Token found");
+      respondAuthCallout(serviceMessage, ar, null, "No Auth Token found");
+      return;
+    }
+
+    AuthCalloutUser acUser = NATS_USERS.get(ar.connectOpts.authToken);
+    if (acUser == null) {
+      System.err.println("[HANDLER] No user found for authToken: " + ar.connectOpts.authToken);
+      respondAuthCallout(serviceMessage, ar, null, "Invalid auth token");
+      return;
+    }
+
+    System.out.println("[HANDLER] Authenticated user: " + ar.connectOpts.authToken + " (method: AUTH_TOKEN)");
+
+    try {
       UserClaim uc = new UserClaim().pub(acUser.pub).sub(acUser.sub).resp(acUser.resp);
-
-
       String userJwt = new ClaimIssuer().aud("NDB").name(ar.connectOpts.user)
           .iss(USER_SIGNING_PUBLIC_KEY).sub(ar.userNkey).nats(uc).issueJwt(USER_SIGNING_NKEY);
-
-
-      respond(serviceMessage, ar, userJwt, null);
+      respondAuthCallout(serviceMessage, ar, userJwt, null);
     } catch (Exception e) {
+      System.err.println("[HANDLER] Error issuing JWT: " + e.getMessage());
       e.printStackTrace();
     }
   }
 
-  private void respond(ServiceMessage smsg, AuthorizationRequest ar, String userJwt, String error)
-      throws GeneralSecurityException, IOException {
-
-
-    AuthorizationResponse response = new AuthorizationResponse().jwt(userJwt).error(error);
-
-
-    if (userJwt != null) {
-      System.out.println("[HANDLER] Auth Resp JWT : " + getClaimBody(userJwt));
-    } else {
-      System.out.println("[HANDLER] Auth Resp ERR : " + response.toJson());
+  private String extractSpiffeUri(AuthorizationRequest ar) {
+    if (ar.clientTls == null) {
+      System.out.println("[HANDLER] No client TLS info in authorization request");
+      return null;
     }
 
-    String jwt = new ClaimIssuer()
-        .aud(ar.serverId.id)
-        .iss(USER_SIGNING_PUBLIC_KEY)
-        .sub(ar.userNkey)
-        .nats(response)
-        .issueJwt(USER_SIGNING_NKEY);
+    System.out.println("[HANDLER] clientTls.certs: " + ar.clientTls.certs);
+    System.out.println("[HANDLER] clientTls.verifiedChains: " +
+        (ar.clientTls.verifiedChains != null ? "size=" + ar.clientTls.verifiedChains.size() : "null"));
+
+    String pem = null;
+    // Try certs first (production behavior), fall back to verifiedChains
+    if (ar.clientTls.certs != null && !ar.clientTls.certs.isEmpty()) {
+      pem = ar.clientTls.certs.get(0);
+      System.out.println("[HANDLER] Using cert from clientTls.certs");
+    } else if (ar.clientTls.verifiedChains != null && !ar.clientTls.verifiedChains.isEmpty()) {
+      List<String> firstChain = ar.clientTls.verifiedChains.get(0);
+      System.out.println("[HANDLER] verifiedChains[0] size=" + firstChain.size());
+      for (int i = 0; i < firstChain.size(); i++) {
+        String entry = firstChain.get(i);
+        System.out.println("[HANDLER] verifiedChains[0][" + i + "] length=" +
+            (entry != null ? entry.length() : "null") +
+            " preview=" + (entry != null && entry.length() > 40 ? entry.substring(0, 40) + "..." : entry));
+      }
+      if (!firstChain.isEmpty() && firstChain.get(0) != null && !firstChain.get(0).isBlank()) {
+        pem = firstChain.get(0);
+        System.out.println("[HANDLER] Using cert from clientTls.verifiedChains");
+      }
+    }
+
+    if (pem == null || pem.isBlank()) {
+      System.out.println("[HANDLER] No client certificates present in authorization request");
+      return null;
+    }
+
+    // The library may leave JSON artifacts in the PEM string:
+    // - literal \n instead of real newlines
+    // - escaped forward slashes \/
+    // - surrounding quote characters
+    pem = pem.replace("\\n", "\n");
+    pem = pem.replace("\\/", "/");
+    pem = pem.trim();
+    if (pem.startsWith("\"")) pem = pem.substring(1);
+    if (pem.endsWith("\"")) pem = pem.substring(0, pem.length() - 1);
+    pem = pem.trim();
+    System.out.println("[HANDLER] PEM after unescape (length=" + pem.length() + "):");
+    System.out.println(pem);
+    System.out.println("[HANDLER] PEM ends with: [" +
+        pem.substring(Math.max(0, pem.length() - 40)) + "]");
+
+    try {
+      CertificateFactory cf = CertificateFactory.getInstance("X.509");
+      X509Certificate cert = (X509Certificate) cf.generateCertificate(
+          new ByteArrayInputStream(pem.getBytes()));
+
+      System.out.println("[HANDLER] Parsed client certificate, subject: " + cert.getSubjectX500Principal().getName());
+
+      Collection<List<?>> sans = cert.getSubjectAlternativeNames();
+      if (sans == null) {
+        System.out.println("[HANDLER] No SANs found in client certificate");
+        return null;
+      }
+
+      for (List<?> san : sans) {
+        Integer type = (Integer) san.get(0);
+        Object value = san.get(1);
+        if (type == 6 && value instanceof String) {
+          String uri = (String) value;
+          if (uri.startsWith("spiffe://")) {
+            return uri;
+          }
+        }
+      }
+
+      System.out.println("[HANDLER] No SPIFFE URI found in certificate SANs");
+      return null;
+
+    } catch (Exception e) {
+      System.err.println("[HANDLER] Error parsing client certificate: " + e.getMessage());
+      e.printStackTrace();
+      return null;
+    }
+  }
 
 
-    System.out.println("[HANDLER] Claim-Response: " + getClaimBody(jwt));
-    smsg.respond(connection, jwt);
+  private String extractClientIdFromSpiffeUri(String spiffeUri) {
+    String path = URI.create(spiffeUri).getPath();
+    if (path == null || path.isEmpty()) {
+      System.out.println("[HANDLER] SPIFFE URI has no path: " + spiffeUri);
+      return null;
+    }
+
+    if (!path.startsWith("/db-server/")) {
+      System.out.println("[HANDLER] Unsupported workload type in SPIFFE URI: " + spiffeUri);
+      return null;
+    }
+
+    String clientId = path.substring("/db-server/".length());
+    if (clientId.isEmpty()) {
+      System.out.println("[HANDLER] No client ID found in SPIFFE URI: " + spiffeUri);
+      return null;
+    }
+
+    return clientId;
+  }
+
+  private void respondAuthCallout(ServiceMessage smsg, AuthorizationRequest ar, String userJwt, String error) {
+    try {
+      if (userJwt != null) {
+        AuthorizationResponse response = new AuthorizationResponse().jwt(userJwt).error(error);
+        String jwt = new ClaimIssuer()
+            .aud(ar.serverId.id)
+            .iss(USER_SIGNING_PUBLIC_KEY)
+            .sub(ar.userNkey)
+            .nats(response)
+            .issueJwt(USER_SIGNING_NKEY);
+
+        System.out.println("[HANDLER] Auth Resp JWT : " + getClaimBody(jwt));
+        smsg.respond(connection, jwt);
+      } else {
+        System.out.println("[HANDLER] Auth Resp ERR : " + error);
+        smsg.respond(connection, "");
+      }
+    } catch (Exception e) {
+      System.err.println("[HANDLER] Error responding: " + e.getMessage());
+      e.printStackTrace();
+    }
   }
 }

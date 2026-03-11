@@ -13,18 +13,23 @@ const bodyParser = require("body-parser");
 const port = 8000;
 const jwtAuth = jwtAuthenticator(cred.jwt)
 const natsConnectOptions: ConnectionOptions = {
-  servers: ["10.15.152.152:4222"],
+  servers: ["tls://127.0.0.1:4222"],
   authenticator: jwtAuth,
   debug: false,
   noEcho: true,
   ignoreClusterUpdates: true,
   maxReconnectAttempts: 5,
-  name: "Shurya"
+  name: "Shurya",
+  tls: {
+    caFile: "/Users/harjot.kaur/nats-poc/certs/ca.cert",
+    keyFile: "/Users/harjot.kaur/nats-poc/certs/client.key",
+    certFile: "/Users/harjot.kaur/nats-poc/certs/client.cert",
+    // Disable hostname verification for local development
+    // The certificate is valid but doesn't include localhost/127.0.0.1 in SANs
+    // @ts-ignore - checkServerIdentity is a valid Node.js TLS option
+    checkServerIdentity: () => undefined
+  }
 };
-
-// tls: {
-//   caFile: "/Users/shurya/poc/certs/cpaas-ca-int.pem"
-// }
 
 const app = express();
 app.use(bodyParser.urlencoded({ extended: false }));
@@ -71,8 +76,16 @@ const server = app.listen(port, 'localhost', () => {
         throw `Failed to establish stream connection`
       }
     });
-    // createSubscriber(argv.command_subject);
-    // addToRequestReplyMap(argv.reply_subject, argv.request_subject);
+    // Create subscriber for command subject if provided
+    if (argv.command_subject) {
+      createSubscriber(argv.command_subject);
+      console.log(`Subscribed to command subject: ${argv.command_subject}`);
+    }
+    // Add reply subject mapping if provided
+    if (argv.reply_subject && argv.request_subject) {
+      addToRequestReplyMap(argv.reply_subject, argv.request_subject);
+      console.log(`Mapped reply subject ${argv.reply_subject} to request subject ${argv.request_subject}`);
+    }
     // createPullConsumer("66dcc41f-9561-4818-ac68-64f1d3331e90.a2708194-1a07-4261-9cfa-a0ec68ed5758.operations","a2708194-1a07-4261-9cfa-a0ec68ed5758")
     // let count=0, startTime = new Date();
     // console.log("Start Time: " + startTime)

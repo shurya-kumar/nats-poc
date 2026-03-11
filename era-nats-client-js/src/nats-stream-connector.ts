@@ -25,7 +25,9 @@ async function initStreamConnection(nc: NatsConnection): Promise<boolean>{
   try{
     jetStreamManager = await nc.jetstreamManager();
     jetStreamClient = nc.jetstream();
+    console.log("JetStream manager and client initialized successfully");
 
+    // Commented out automatic operations - use API endpoints instead
     // addStream("test_stream", "teste1").then(res => {
       addEphemeralConsumer("test_stream", "e1").then(res => {
         console.log(res)
@@ -223,6 +225,11 @@ async function startConsumer() {
 
 async function addStream(streamName: string, subject: string): Promise<string>{
   try{
+    // Check if JetStream manager is initialized
+    if (!jetStreamManager) {
+      return `Failed to create stream ${streamName}: JetStream manager not initialized. Please ensure the connection is established.`;
+    }
+    
     const streamConfig: Partial<StreamConfig> = {
       name: streamName,
       subjects: [subject],
@@ -235,7 +242,7 @@ async function addStream(streamName: string, subject: string): Promise<string>{
     return `Created stream with name ${streamName} and subject ${subject} on ${streamInfo.created}`
   } catch (e){
     console.log(e);
-    return `Failed to create a stream ${streamName}`;
+    return `Failed to create a stream ${streamName}: ${e}`;
   }
 }
 
@@ -320,14 +327,30 @@ async function removeDurableConsumer(stream: string, durableName: string): Promi
 
 async function publishMessageToStream(message, subject){
   try{
-    console.log("Publishing message")
-    await jetStreamClient.publish(subject, jc.encode(JSON.stringify(message)));
-    console.log("Published message")
-    return `Published message to stream on ${subject}`
-  } catch (e){
-    console.log("Error message")
+    // Check if JetStream client is initialized
+    if (!jetStreamClient) {
+      return `Failed to publish message to stream ${subject}: JetStream client not initialized`;
+    }
+    
+    console.log(`Publishing message to subject: ${subject}`);
+    console.log(`Message content:`, message);
+    
+    // Encode the message - handle both string and object
+    let encodedMessage;
+    if (typeof message === 'string') {
+      encodedMessage = jc.encode(message);
+    } else {
+      encodedMessage = jc.encode(JSON.stringify(message));
+    }
+    
+    const pubAck = await jetStreamClient.publish(subject, encodedMessage);
+    console.log(`Published message successfully. Sequence: ${pubAck.seq}, Stream: ${pubAck.stream}`);
+    return `Published message to stream on ${subject}. Sequence: ${pubAck.seq}`
+  } catch (e: any){
+    console.log("Error publishing message to stream:");
     console.log(e);
-    return `Failed to publish message to stream ${subject}`
+    const errorMsg = e?.message || e?.toString() || String(e);
+    return `Failed to publish message to stream ${subject}: ${errorMsg}`
   }
 }
 
